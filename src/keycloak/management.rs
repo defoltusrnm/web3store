@@ -7,10 +7,9 @@ use tokio_util::sync::CancellationToken;
 use crate::utils::errors::AppErr;
 
 use super::{
-    authorization::{AdminAccessTokenProvider, DefaultAdminTokenProvider},
-    credentials::AdminCredentialProvider,
+    authorization::AdminAccessTokenProvider,
     host::HostAddressProvider,
-    routes::{AdminRoutes, DefaultAdminRoutes},
+    routes::AdminRoutes,
 };
 
 pub trait KeycloakManagement {
@@ -33,21 +32,21 @@ pub trait KeycloakManagement {
     ) -> impl Future<Output = Result<(), AppErr>>;
 }
 
-pub struct DefaultKeycloakManagement<TAuthorization, THost>
+pub struct DefaultKeycloakManagement<'a, TAuthorization, THost>
 where
     TAuthorization: AdminAccessTokenProvider,
     THost: HostAddressProvider,
 {
-    auth_provider: TAuthorization,
-    host_provider: THost,
+    auth_provider: &'a TAuthorization,
+    host_provider: &'a THost,
 }
 
-impl<TAuthorization, THost> DefaultKeycloakManagement<TAuthorization, THost>
+impl<'a, TAuthorization, THost> DefaultKeycloakManagement<'a, TAuthorization, THost>
 where
     TAuthorization: AdminAccessTokenProvider,
     THost: HostAddressProvider,
 {
-    pub fn new(auth_provider: TAuthorization, host_provider: THost) -> Self {
+    pub fn new(auth_provider: &'a TAuthorization, host_provider: &'a THost) -> Self {
         DefaultKeycloakManagement {
             auth_provider,
             host_provider,
@@ -55,15 +54,15 @@ where
     }
 }
 
-impl<TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> KeycloakManagement
-    for DefaultKeycloakManagement<TAuthorization, THost>
+impl<'a, TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> KeycloakManagement
+    for DefaultKeycloakManagement<'a, TAuthorization, THost>
 {
     async fn create_realm<TRoutes: AdminRoutes>(
         &self,
         request: &CreateRealmRequest,
         cancellation_token: &CancellationToken,
     ) -> Result<(), AppErr> {
-        let url = TRoutes::get_create_realm_route(&self.host_provider).await?;
+        let url = TRoutes::get_create_realm_route(self.host_provider).await?;
 
         let token = self
             .auth_provider
@@ -90,7 +89,7 @@ impl<TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> Keycl
         request: &CreateClientRequest,
         cancellation_token: &CancellationToken,
     ) -> Result<(), AppErr> {
-        let url = TRoutes::get_create_client_route(&self.host_provider, &request.realm).await?;
+        let url = TRoutes::get_create_client_route(self.host_provider, &request.realm).await?;
 
         let token = self
             .auth_provider
@@ -117,7 +116,7 @@ impl<TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> Keycl
         request: &CreateUserRequest,
         cancellation_token: &CancellationToken,
     ) -> Result<(), AppErr> {
-        let url = TRoutes::get_create_user_route(&self.host_provider, &request.realm).await?;
+        let url = TRoutes::get_create_user_route(self.host_provider, &request.realm).await?;
 
         let token = self
             .auth_provider

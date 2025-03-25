@@ -22,11 +22,11 @@ async fn main() -> Result<(), AppErr> {
     let realm_name = std::env::var("KEYCLOAK_REALM")
         .map_err(|err| AppErr::from_owned(format!("cannot get realm name: {err}")))?;
 
-    let host_provider = EnvHostAddressProvider::new("KEYCLOAK_HOST");
+    let host_provider = &EnvHostAddressProvider::new("KEYCLOAK_HOST");
     let credentials_provider =
-        EnvAdminCredentialProvider::new("KEYCLOAK_ADMIN_LOGIN", "KEYCLOAK_ADMIN_PASSWORD");
+        &EnvAdminCredentialProvider::new("KEYCLOAK_ADMIN_LOGIN", "KEYCLOAK_ADMIN_PASSWORD");
 
-    let auth_provider = DefaultAdminTokenProvider::new(host_provider, credentials_provider);
+    let auth_provider = &DefaultAdminTokenProvider::new(host_provider, credentials_provider);
     let keycloak_manager = DefaultKeycloakManagement::new(auth_provider, host_provider);
 
     _ = keycloak_manager

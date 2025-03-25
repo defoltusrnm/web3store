@@ -7,18 +7,18 @@ pub trait AdminRoutes {
         provider: &THost,
     ) -> impl Future<Output = Result<String, AppErr>>;
 
-    fn get_create_realm_route<THost: HostAddressProvider>(
-        provider: &THost,
+    fn get_create_realm_route<'a, THost: HostAddressProvider>(
+        provider: &'a THost,
     ) -> impl Future<Output = Result<String, AppErr>>;
 
-    fn get_create_client_route<THost: HostAddressProvider>(
-        provider: &THost,
-        realm: &str,
+    fn get_create_client_route<'a, THost: HostAddressProvider>(
+        provider: &'a THost,
+        realm: &'a str,
     ) -> impl Future<Output = Result<String, AppErr>>;
 
-    fn get_create_user_route<THost: HostAddressProvider>(
-        provider: &THost,
-        realm: &str,
+    fn get_create_user_route<'a, THost: HostAddressProvider>(
+        provider: &'a THost,
+        realm: &'a str,
     ) -> impl Future<Output = Result<String, AppErr>>;
 }
 

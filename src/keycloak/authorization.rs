@@ -10,7 +10,7 @@ use tokio_util::sync::CancellationToken;
 use super::{
     credentials::AdminCredentialProvider,
     host::HostAddressProvider,
-    routes::{AdminRoutes, DefaultAdminRoutes},
+    routes::AdminRoutes,
 };
 use crate::utils::errors::AppErr;
 
@@ -32,15 +32,15 @@ where
     credentials_provider: &'a TAdminCredentialProvider,
 }
 
-impl<THostProvider, TAdminCredentialProvider>
-    DefaultAdminTokenProvider<THostProvider, TAdminCredentialProvider>
+impl<'a, THostProvider, TAdminCredentialProvider>
+    DefaultAdminTokenProvider<'a, THostProvider, TAdminCredentialProvider>
 where
     THostProvider: HostAddressProvider,
     TAdminCredentialProvider: AdminCredentialProvider,
 {
     pub fn new(
-        host_provider: THostProvider,
-        credentials_provider: TAdminCredentialProvider,
+        host_provider: &'a THostProvider,
+        credentials_provider: &'a TAdminCredentialProvider,
     ) -> Self {
         DefaultAdminTokenProvider {
             host_provider,
@@ -49,8 +49,8 @@ where
     }
 }
 
-impl<THostProvider, TAdminCredentialProvider> AdminAccessTokenProvider
-    for DefaultAdminTokenProvider<THostProvider, TAdminCredentialProvider>
+impl<'a, THostProvider, TAdminCredentialProvider> AdminAccessTokenProvider
+    for DefaultAdminTokenProvider<'a, THostProvider, TAdminCredentialProvider>
 where
     THostProvider: HostAddressProvider,
     TAdminCredentialProvider: AdminCredentialProvider,
@@ -59,7 +59,7 @@ where
         &self,
         cancellation_token: &CancellationToken,
     ) -> Result<AccessTokenResponse, AppErr> {
-        let auth_route = TRoutes::get_access_token_route(&self.host_provider).await?;
+        let auth_route = TRoutes::get_access_token_route(self.host_provider).await?;
         let login = self.credentials_provider.get_login().await?;
         let password = self.credentials_provider.get_password().await?;
 
