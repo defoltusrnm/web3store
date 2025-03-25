@@ -56,7 +56,7 @@ async fn main() -> Result<(), AppErr> {
 
     let keycloak_manager = &DefaultKeycloakManagement::new(auth_provider, routes);
 
-    _ = keycloak_manager
+    keycloak_manager
         .create_realm(
             &CreateRealmRequest::new(&realm_name),
             &CancellationToken::new(),
@@ -65,7 +65,7 @@ async fn main() -> Result<(), AppErr> {
 
     log::info!("realm created");
 
-    _ = keycloak_manager
+    keycloak_manager
         .create_client(
             &CreateClientRequest::new(&client_name, &realm_name, &client_secret),
             &CancellationToken::new(),
@@ -88,7 +88,7 @@ async fn main() -> Result<(), AppErr> {
 
     log::info!("got client: {0}, {1}", client.id, client.client_id);
 
-    _ = keycloak_manager
+    keycloak_manager
         .create_role(
             &CreateRoleRequest::new(&realm_name, &client.id, &role_name, "some_role"),
             &CancellationToken::new(),
@@ -106,7 +106,7 @@ async fn main() -> Result<(), AppErr> {
 
     log::info!("got role {0}, {1}", role.id, role.name);
 
-    _ = keycloak_manager
+    keycloak_manager
         .create_user(
             &CreateUserRequest::new(&realm_name, "test1", "test"),
             &CancellationToken::new(),
@@ -129,7 +129,7 @@ async fn main() -> Result<(), AppErr> {
 
     log::info!("got user: {0}, {1}", user.id, user.username);
 
-    _ = keycloak_manager
+    keycloak_manager
         .update_users_email(
             &UpdateUsersEmailRequest::new_verified(&realm_name, &user.id, "test@test.test"),
             &CancellationToken::new(),
@@ -138,7 +138,7 @@ async fn main() -> Result<(), AppErr> {
 
     log::info!("user's email updated");
 
-    _ = keycloak_manager
+    keycloak_manager
         .assign_roles(
             &AssignRolesRequest::new(
                 &realm_name,
