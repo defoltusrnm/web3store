@@ -27,7 +27,7 @@ async fn main() -> Result<(), AppErr> {
         &EnvAdminCredentialProvider::new("KEYCLOAK_ADMIN_LOGIN", "KEYCLOAK_ADMIN_PASSWORD");
 
     let auth_provider = &DefaultAdminTokenProvider::new(host_provider, credentials_provider);
-    let keycloak_manager = DefaultKeycloakManagement::new(auth_provider, host_provider);
+    let keycloak_manager = &DefaultKeycloakManagement::new(auth_provider, host_provider);
 
     _ = keycloak_manager
         .create_realm::<DefaultAdminRoutes>(
