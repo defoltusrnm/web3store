@@ -35,11 +35,13 @@ async fn main() -> Result<(), AppErr> {
     let credentials_provider =
         &EnvAdminCredentialProvider::new("KEYCLOAK_ADMIN_LOGIN", "KEYCLOAK_ADMIN_PASSWORD");
 
-    let auth_provider = &DefaultAdminTokenProvider::new(host_provider, credentials_provider);
-    let keycloak_manager = &DefaultKeycloakManagement::new(auth_provider, host_provider);
+    let routes = &DefaultAdminRoutes::new(host_provider);
+
+    let auth_provider = &DefaultAdminTokenProvider::new(routes, credentials_provider);
+    let keycloak_manager = &DefaultKeycloakManagement::new(auth_provider, routes);
 
     _ = keycloak_manager
-        .create_realm::<DefaultAdminRoutes>(
+        .create_realm(
             &CreateRealmRequest::new(&realm_name),
             &CancellationToken::new(),
         )
@@ -48,7 +50,7 @@ async fn main() -> Result<(), AppErr> {
     log::info!("realm created");
 
     _ = keycloak_manager
-        .create_client::<DefaultAdminRoutes>(
+        .create_client(
             &CreateClientRequest::new(&client_name, &realm_name, &client_secret),
             &CancellationToken::new(),
         )
@@ -57,7 +59,7 @@ async fn main() -> Result<(), AppErr> {
     log::info!("client created");
 
     let clients = keycloak_manager
-        .query_clients::<DefaultAdminRoutes>(
+        .query_clients(
             &ClientsQuery::new(&realm_name, &client_name),
             &CancellationToken::new(),
         )
@@ -71,7 +73,7 @@ async fn main() -> Result<(), AppErr> {
     log::info!("got client: {0}, {1}", client.id, client.client_id);
 
     _ = keycloak_manager
-        .create_role::<DefaultAdminRoutes>(
+        .create_role(
             &CreateRoleRequest::new(&realm_name, &client.id, &role_name, "some_role"),
             &CancellationToken::new(),
         )
@@ -80,7 +82,7 @@ async fn main() -> Result<(), AppErr> {
     log::info!("role created");
 
     let role = keycloak_manager
-        .query_role::<DefaultAdminRoutes>(
+        .query_role(
             &RoleQuery::new(&realm_name, &client.id, &role_name),
             &CancellationToken::new(),
         )
@@ -89,7 +91,7 @@ async fn main() -> Result<(), AppErr> {
     log::info!("got role {0}, {1}", role.id, role.name);
 
     _ = keycloak_manager
-        .create_user::<DefaultAdminRoutes>(
+        .create_user(
             &CreateUserRequest::new(&realm_name, "test1", "test"),
             &CancellationToken::new(),
         )
@@ -98,7 +100,7 @@ async fn main() -> Result<(), AppErr> {
     log::info!("user created");
 
     let users = keycloak_manager
-        .query_users::<DefaultAdminRoutes>(
+        .query_users(
             &UsersQuery::new(&realm_name, "test1"),
             &CancellationToken::new(),
         )
@@ -112,7 +114,7 @@ async fn main() -> Result<(), AppErr> {
     log::info!("got user: {0}, {1}", user.id, user.username);
 
     _ = keycloak_manager
-        .update_users_email::<DefaultAdminRoutes>(
+        .update_users_email(
             &UpdateUsersEmailRequest::new_verified(&realm_name, &user.id, "test@test.test"),
             &CancellationToken::new(),
         )
@@ -121,7 +123,7 @@ async fn main() -> Result<(), AppErr> {
     log::info!("user's email updated");
 
     _ = keycloak_manager
-        .assign_roles::<DefaultAdminRoutes>(
+        .assign_roles(
             &AssignRolesRequest::new(
                 &realm_name,
                 &user.id,

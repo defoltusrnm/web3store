@@ -19,96 +19,96 @@ use super::{
 };
 
 pub trait KeycloakManagement {
-    fn create_realm<TRoutes: AdminRoutes>(
+    fn create_realm(
         &self,
         request: &CreateRealmRequest,
         cancellation_token: &CancellationToken,
     ) -> impl Future<Output = Result<(), AppErr>>;
 
-    fn create_client<TRoutes: AdminRoutes>(
+    fn create_client(
         &self,
         request: &CreateClientRequest,
         cancellation_token: &CancellationToken,
     ) -> impl Future<Output = Result<(), AppErr>>;
 
-    fn create_user<TRoutes: AdminRoutes>(
+    fn create_user(
         &self,
         request: &CreateUserRequest,
         cancellation_token: &CancellationToken,
     ) -> impl Future<Output = Result<String, AppErr>>;
 
-    fn query_users<TRoutes: AdminRoutes>(
+    fn query_users(
         &self,
         request: &UsersQuery,
         cancellation_token: &CancellationToken,
     ) -> impl Future<Output = Result<Vec<UserResponse>, AppErr>>;
 
-    fn query_clients<TRoutes: AdminRoutes>(
+    fn query_clients(
         &self,
         request: &ClientsQuery,
         cancellation_token: &CancellationToken,
     ) -> impl Future<Output = Result<Vec<ClientResponse>, AppErr>>;
 
-    fn create_role<TRoutes: AdminRoutes>(
+    fn create_role(
         &self,
         request: &CreateRoleRequest,
         cancellation_token: &CancellationToken,
     ) -> impl Future<Output = Result<(), AppErr>>;
 
-    fn query_role<TRoutes: AdminRoutes>(
+    fn query_role(
         &self,
         request: &RoleQuery,
         cancellation_token: &CancellationToken,
     ) -> impl Future<Output = Result<RoleResponse, AppErr>>;
 
-    fn assign_roles<TRoutes: AdminRoutes>(
+    fn assign_roles(
         &self,
         request: &AssignRolesRequest,
         cancellation_token: &CancellationToken,
     ) -> impl Future<Output = Result<(), AppErr>>;
 
-    fn update_users_email<TRoutes: AdminRoutes>(
+    fn update_users_email(
         &self,
         request: &UpdateUsersEmailRequest,
         cancellation_token: &CancellationToken,
     ) -> impl Future<Output = Result<(), AppErr>>;
 }
 
-pub struct DefaultKeycloakManagement<'a, TAuthorization, THost>
+pub struct DefaultKeycloakManagement<'a, TAuthorization, TRoutes>
 where
     TAuthorization: AdminAccessTokenProvider,
-    THost: HostAddressProvider,
+    TRoutes: AdminRoutes,
 {
     auth_provider: &'a TAuthorization,
-    host_provider: &'a THost,
+    routes: &'a TRoutes,
 }
 
-impl<'a, TAuthorization, THost> DefaultKeycloakManagement<'a, TAuthorization, THost>
+impl<'a, TAuthorization, TRoutes> DefaultKeycloakManagement<'a, TAuthorization, TRoutes>
 where
     TAuthorization: AdminAccessTokenProvider,
-    THost: HostAddressProvider,
+    TRoutes: AdminRoutes,
 {
-    pub fn new(auth_provider: &'a TAuthorization, host_provider: &'a THost) -> Self {
+    pub fn new(auth_provider: &'a TAuthorization, routes: &'a TRoutes) -> Self {
         DefaultKeycloakManagement {
             auth_provider,
-            host_provider,
+            routes,
         }
     }
 }
 
-impl<'a, TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> KeycloakManagement
-    for DefaultKeycloakManagement<'a, TAuthorization, THost>
+impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> KeycloakManagement
+    for DefaultKeycloakManagement<'a, TAuthorization, TRoutes>
 {
-    async fn create_realm<TRoutes: AdminRoutes>(
+    async fn create_realm(
         &self,
         request: &CreateRealmRequest,
         cancellation_token: &CancellationToken,
     ) -> Result<(), AppErr> {
-        let url = TRoutes::get_create_realm_route(self.host_provider).await?;
+        let url = self.routes.get_create_realm_route().await?;
 
         let token = self
             .auth_provider
-            .get_access_token::<TRoutes>(cancellation_token)
+            .get_access_token(cancellation_token)
             .await?;
 
         let create_realm_response = select! {
@@ -126,16 +126,16 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> K
         }
     }
 
-    async fn create_client<TRoutes: AdminRoutes>(
+    async fn create_client(
         &self,
         request: &CreateClientRequest,
         cancellation_token: &CancellationToken,
     ) -> Result<(), AppErr> {
-        let url = TRoutes::get_create_client_route(self.host_provider, &request.realm).await?;
+        let url = self.routes.get_create_client_route(&request.realm).await?;
 
         let token = self
             .auth_provider
-            .get_access_token::<TRoutes>(cancellation_token)
+            .get_access_token(cancellation_token)
             .await?;
 
         let create_client_response = select! {
@@ -153,16 +153,16 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> K
         }
     }
 
-    async fn create_user<TRoutes: AdminRoutes>(
+    async fn create_user(
         &self,
         request: &CreateUserRequest,
         cancellation_token: &CancellationToken,
     ) -> Result<String, AppErr> {
-        let url = TRoutes::get_create_user_route(self.host_provider, &request.realm).await?;
+        let url = self.routes.get_create_user_route(&request.realm).await?;
 
         let token = self
             .auth_provider
-            .get_access_token::<TRoutes>(cancellation_token)
+            .get_access_token(cancellation_token)
             .await?;
 
         let create_user_response = select! {
@@ -187,18 +187,19 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> K
         }
     }
 
-    async fn query_users<TRoutes: AdminRoutes>(
+    async fn query_users(
         &self,
         request: &UsersQuery,
         cancellation_token: &CancellationToken,
     ) -> Result<Vec<UserResponse>, AppErr> {
-        let url =
-            TRoutes::get_users_query_route(self.host_provider, &request.realm, &request.username)
-                .await?;
+        let url = self
+            .routes
+            .get_users_query_route(&request.realm, &request.username)
+            .await?;
 
         let token = self
             .auth_provider
-            .get_access_token::<TRoutes>(cancellation_token)
+            .get_access_token(cancellation_token)
             .await?;
 
         let response = select! {
@@ -227,21 +228,19 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> K
         }
     }
 
-    async fn query_clients<TRoutes: AdminRoutes>(
+    async fn query_clients(
         &self,
         request: &ClientsQuery,
         cancellation_token: &CancellationToken,
     ) -> Result<Vec<ClientResponse>, AppErr> {
-        let url = TRoutes::get_clients_query_route(
-            self.host_provider,
-            &request.realm,
-            &request.client_id,
-        )
-        .await?;
+        let url = self
+            .routes
+            .get_clients_query_route(&request.realm, &request.client_id)
+            .await?;
 
         let token = self
             .auth_provider
-            .get_access_token::<TRoutes>(cancellation_token)
+            .get_access_token(cancellation_token)
             .await?;
 
         let response = select! {
@@ -270,21 +269,19 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> K
         }
     }
 
-    async fn create_role<TRoutes: AdminRoutes>(
+    async fn create_role(
         &self,
         request: &CreateRoleRequest,
         cancellation_token: &CancellationToken,
     ) -> Result<(), AppErr> {
-        let url = TRoutes::get_create_role_route(
-            self.host_provider,
-            &request.realm,
-            &request.client_uuid,
-        )
-        .await?;
+        let url = self
+            .routes
+            .get_create_role_route(&request.realm, &request.client_uuid)
+            .await?;
 
         let token = self
             .auth_provider
-            .get_access_token::<TRoutes>(cancellation_token)
+            .get_access_token(cancellation_token)
             .await?;
 
         let create_role_response = select! {
@@ -309,22 +306,19 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> K
         }
     }
 
-    async fn query_role<TRoutes: AdminRoutes>(
+    async fn query_role(
         &self,
         request: &RoleQuery,
         cancellation_token: &CancellationToken,
     ) -> Result<RoleResponse, AppErr> {
-        let url = TRoutes::get_role_query_route(
-            self.host_provider,
-            &request.realm,
-            &request.client_uuid,
-            &request.role_name,
-        )
-        .await?;
+        let url = self
+            .routes
+            .get_role_query_route(&request.realm, &request.client_uuid, &request.role_name)
+            .await?;
 
         let token = self
             .auth_provider
-            .get_access_token::<TRoutes>(cancellation_token)
+            .get_access_token(cancellation_token)
             .await?;
 
         let response = select! {
@@ -351,22 +345,19 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> K
         }
     }
 
-    async fn assign_roles<TRoutes: AdminRoutes>(
+    async fn assign_roles(
         &self,
         request: &AssignRolesRequest,
         cancellation_token: &CancellationToken,
     ) -> Result<(), AppErr> {
-        let url = TRoutes::get_assign_roles_query_route(
-            self.host_provider,
-            &request.realm,
-            &request.user_uuid,
-            &request.client_uuid,
-        )
-        .await?;
+        let url = self
+            .routes
+            .get_assign_roles_query_route(&request.realm, &request.user_uuid, &request.client_uuid)
+            .await?;
 
         let token = self
             .auth_provider
-            .get_access_token::<TRoutes>(cancellation_token)
+            .get_access_token(cancellation_token)
             .await?;
 
         let response = select! {
@@ -394,18 +385,19 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> K
         }
     }
 
-    async fn update_users_email<TRoutes: AdminRoutes>(
+    async fn update_users_email(
         &self,
         request: &UpdateUsersEmailRequest,
         cancellation_token: &CancellationToken,
     ) -> Result<(), AppErr> {
-        let url =
-            TRoutes::get_update_user_route(self.host_provider, &request.realm, &request.user_uuid)
-                .await?;
+        let url = self
+            .routes
+            .get_update_user_route(&request.realm, &request.user_uuid)
+            .await?;
 
         let token = self
             .auth_provider
-            .get_access_token::<TRoutes>(cancellation_token)
+            .get_access_token(cancellation_token)
             .await?;
 
         let response = select! {
