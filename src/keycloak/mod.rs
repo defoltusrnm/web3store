@@ -6,3 +6,4 @@ pub mod management;
 pub mod requests;
 pub mod queries;
 pub mod responses;
+pub mod watcher;

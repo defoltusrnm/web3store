@@ -10,22 +10,22 @@ services:
       - KC_BOOTSTRAP_ADMIN_USERNAME=admin
       - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
 
-  # auth_api:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   networks:
-  #     - auth_net
-  #   depends_on:
-  #     - keycloak
-  #   environment:
-  #     - KEYCLOAK_HOST=http://keycloak:8080
-  #     - KEYCLOAK_ADMIN_LOGIN=admin
-  #     - KEYCLOAK_ADMIN_PASSWORD=admin
-  #     - KEYCLOAK_CLIENT=app_client
-  #     - KEYCLOAK_CLIENT_SECRET=secret_key_or_whatever
-  #     - KEYCLOAK_REALM=demo_realm
-  #     - KEYCLOAK_ROLE=customer
+  auth_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - auth_net
+    depends_on:
+      - keycloak
+    environment:
+      - KEYCLOAK_HOST=http://keycloak:8080
+      - KEYCLOAK_ADMIN_LOGIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KEYCLOAK_CLIENT=app_client
+      - KEYCLOAK_CLIENT_SECRET=secret_key_or_whatever
+      - KEYCLOAK_REALM=demo_realm
+      - KEYCLOAK_ROLE=customer
 
 networks:
   auth_net:

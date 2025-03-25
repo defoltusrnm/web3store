@@ -7,7 +7,6 @@ use crate::utils::errors::AppErr;
 
 use super::{
     authorization::AdminAccessTokenProvider,
-    host::HostAddressProvider,
     queries::{clients::ClientsQuery, role::RoleQuery, users::UsersQuery},
     requests::{
         assign_roles::AssignRolesRequest, create_client::CreateClientRequest,
