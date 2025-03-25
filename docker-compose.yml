@@ -25,6 +25,7 @@ services:
   #     - KEYCLOAK_CLIENT=app_client
   #     - KEYCLOAK_CLIENT_SECRET=secret_key_or_whatever
   #     - KEYCLOAK_REALM=demo_realm
+  #     - KEYCLOAK_ROLE=customer
 
 networks:
   auth_net:

@@ -6,10 +6,15 @@ use keycloak::{
     authorization::DefaultAdminTokenProvider,
     credentials::EnvAdminCredentialProvider,
     host::EnvHostAddressProvider,
-    management::{
-        AssignRoleRequest, AssignRolesRequest, ClientsQuery, CreateClientRequest,
-        CreateRealmRequest, CreateRoleRequest, CreateUserRequest, DefaultKeycloakManagement,
-        KeycloakManagement, RoleQuery, UpdateUsersEmailRequest, UsersQuery,
+    management::{DefaultKeycloakManagement, KeycloakManagement},
+    queries::{clients::ClientsQuery, role::RoleQuery, users::UsersQuery},
+    requests::{
+        assign_roles::{AssignRoleRequest, AssignRolesRequest},
+        create_client::CreateClientRequest,
+        create_realm::CreateRealmRequest,
+        create_role::CreateRoleRequest,
+        create_user::CreateUserRequest,
+        update_users_email_request::UpdateUsersEmailRequest,
     },
     routes::DefaultAdminRoutes,
 };

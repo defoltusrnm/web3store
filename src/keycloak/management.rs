@@ -1,13 +1,21 @@
 use http::StatusCode;
 use reqwest::{Client, Response};
-use serde::{Deserialize, Serialize};
 use tokio::select;
 use tokio_util::sync::CancellationToken;
 
 use crate::utils::errors::AppErr;
 
 use super::{
-    authorization::AdminAccessTokenProvider, host::HostAddressProvider, routes::AdminRoutes,
+    authorization::AdminAccessTokenProvider,
+    host::HostAddressProvider,
+    queries::{clients::ClientsQuery, role::RoleQuery, users::UsersQuery},
+    requests::{
+        assign_roles::AssignRolesRequest, create_client::CreateClientRequest,
+        create_realm::CreateRealmRequest, create_role::CreateRoleRequest,
+        create_user::CreateUserRequest, update_users_email_request::UpdateUsersEmailRequest,
+    },
+    responses::{client::ClientResponse, role::RoleResponse, user::UserResponse},
+    routes::AdminRoutes,
 };
 
 pub trait KeycloakManagement {
@@ -420,236 +428,6 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> K
             _ => Err(AppErr::from_owned(format!(
                 "update user's email status code: {status} with body {body}"
             ))),
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct CreateRealmRequest {
-    pub realm: String,
-    pub enabled: bool,
-}
-
-impl CreateRealmRequest {
-    pub fn new(realm: &str) -> Self {
-        CreateRealmRequest {
-            realm: realm.to_owned(),
-            enabled: true,
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct CreateClientRequest {
-    #[serde(skip)]
-    pub realm: String,
-    #[serde(rename = "clientId")]
-    pub client_id: String,
-    pub enabled: bool,
-    #[serde(rename = "publicClient")]
-    pub public_client: bool,
-    pub secret: String,
-    #[serde(rename = "directAccessGrantsEnabled")]
-    pub direct_access_grants_enabled: bool,
-}
-
-impl CreateClientRequest {
-    pub fn new(client: &str, realm: &str, secret: &str) -> Self {
-        CreateClientRequest {
-            realm: realm.to_owned(),
-            client_id: client.to_owned(),
-            enabled: true,
-            public_client: false,
-            secret: secret.to_owned(),
-            direct_access_grants_enabled: true,
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct CreateUserRequest {
-    #[serde(skip)]
-    pub realm: String,
-    pub username: String,
-    pub enabled: bool,
-    pub credentials: [CreateUserCredentialsRequest; 1],
-}
-
-impl CreateUserRequest {
-    pub fn new(realm: &str, username: &str, password: &str) -> Self {
-        CreateUserRequest {
-            realm: realm.to_owned(),
-            username: username.to_owned(),
-            enabled: true,
-            credentials: [CreateUserCredentialsRequest::new(password)],
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct CreateUserCredentialsRequest {
-    #[serde(rename = "type")]
-    pub user_type: String,
-    pub value: String,
-    pub temporary: bool,
-}
-
-impl CreateUserCredentialsRequest {
-    pub fn new(password: &str) -> Self {
-        CreateUserCredentialsRequest {
-            user_type: "password".to_owned(),
-            value: password.to_owned(),
-            temporary: false,
-        }
-    }
-}
-
-pub struct UsersQuery {
-    pub realm: String,
-    pub username: String,
-}
-
-impl UsersQuery {
-    pub fn new(realm: &str, username: &str) -> Self {
-        UsersQuery {
-            realm: realm.to_owned(),
-            username: username.to_owned(),
-        }
-    }
-}
-
-#[derive(Deserialize)]
-pub struct UserResponse {
-    pub id: String,
-    pub username: String,
-    pub enabled: bool,
-}
-
-pub struct ClientsQuery {
-    pub realm: String,
-    pub client_id: String,
-}
-
-impl ClientsQuery {
-    pub fn new(realm: &str, client_id: &str) -> Self {
-        ClientsQuery {
-            realm: realm.to_owned(),
-            client_id: client_id.to_owned(),
-        }
-    }
-}
-
-#[derive(Deserialize)]
-pub struct ClientResponse {
-    pub id: String,
-    #[serde(rename = "clientId")]
-    pub client_id: String,
-}
-
-#[derive(Serialize)]
-pub struct CreateRoleRequest {
-    #[serde(skip)]
-    pub realm: String,
-    #[serde(skip)]
-    pub client_uuid: String,
-    pub name: String,
-    pub description: String,
-    pub composite: bool,
-    #[serde(rename = "clientRole")]
-    pub client_role: bool,
-}
-
-impl CreateRoleRequest {
-    pub fn new(realm: &str, client_uuid: &str, name: &str, description: &str) -> Self {
-        CreateRoleRequest {
-            realm: realm.to_owned(),
-            client_uuid: client_uuid.to_owned(),
-            name: name.to_owned(),
-            description: description.to_owned(),
-            composite: false,
-            client_role: true,
-        }
-    }
-}
-
-pub struct RoleQuery {
-    pub realm: String,
-    pub client_uuid: String,
-    pub role_name: String,
-}
-
-impl RoleQuery {
-    pub fn new(realm: &str, client_uuid: &str, role_name: &str) -> Self {
-        RoleQuery {
-            realm: realm.to_owned(),
-            client_uuid: client_uuid.to_owned(),
-            role_name: role_name.to_owned(),
-        }
-    }
-}
-
-#[derive(Deserialize)]
-pub struct RoleResponse {
-    pub id: String,
-    pub name: String,
-}
-
-pub struct AssignRolesRequest {
-    pub realm: String,
-    pub user_uuid: String,
-    pub client_uuid: String,
-    pub assign_roles: Vec<AssignRoleRequest>,
-}
-
-impl AssignRolesRequest {
-    pub fn new(
-        realm: &str,
-        user_uuid: &str,
-        client_uuid: &str,
-        assign_roles: &[AssignRoleRequest],
-    ) -> Self {
-        AssignRolesRequest {
-            realm: realm.to_owned(),
-            user_uuid: user_uuid.to_owned(),
-            client_uuid: client_uuid.to_owned(),
-            assign_roles: assign_roles.to_vec(),
-        }
-    }
-}
-
-#[derive(Serialize, Clone)]
-pub struct AssignRoleRequest {
-    pub id: String,
-    pub name: String,
-}
-
-impl AssignRoleRequest {
-    pub fn new(id: &str, name: &str) -> Self {
-        AssignRoleRequest {
-            id: id.to_owned(),
-            name: name.to_owned(),
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct UpdateUsersEmailRequest {
-    #[serde(skip)]
-    pub realm: String,
-    #[serde(skip)]
-    pub user_uuid: String,
-    pub email: String,
-    #[serde(rename = "emailVerified")]
-    pub email_verified: bool,
-}
-
-impl UpdateUsersEmailRequest {
-    pub fn new_verified(realm: &str, user_uuid: &str, email: &str) -> Self {
-        UpdateUsersEmailRequest {
-            realm: realm.to_owned(),
-            user_uuid: user_uuid.to_owned(),
-            email: email.to_owned(),
-            email_verified: true,
         }
     }
 }

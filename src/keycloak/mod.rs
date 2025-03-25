@@ -3,3 +3,6 @@ pub mod credentials;
 pub mod host;
 pub mod routes;
 pub mod management;
+pub mod requests;
+pub mod queries;
+pub mod responses;
