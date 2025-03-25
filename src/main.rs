@@ -7,8 +7,9 @@ use keycloak::{
     credentials::EnvAdminCredentialProvider,
     host::EnvHostAddressProvider,
     management::{
-        ClientsQuery, CreateClientRequest, CreateRealmRequest, CreateRoleRequest,
-        CreateUserRequest, DefaultKeycloakManagement, KeycloakManagement, RoleQuery, UsersQuery,
+        AssignRoleRequest, AssignRolesRequest, ClientsQuery, CreateClientRequest,
+        CreateRealmRequest, CreateRoleRequest, CreateUserRequest, DefaultKeycloakManagement,
+        KeycloakManagement, RoleQuery, UpdateUsersEmailRequest, UsersQuery,
     },
     routes::DefaultAdminRoutes,
 };
@@ -104,6 +105,29 @@ async fn main() -> Result<(), AppErr> {
         .unwrap_or(Result::Err(AppErr::from("cannot get user from payload")))?;
 
     log::info!("got user: {0}, {1}", user.id, user.username);
+
+    _ = keycloak_manager
+        .update_users_email::<DefaultAdminRoutes>(
+            &UpdateUsersEmailRequest::new_verified(&realm_name, &user.id, "test@test.test"),
+            &CancellationToken::new(),
+        )
+        .await?;
+
+    log::info!("user's email updated");
+
+    _ = keycloak_manager
+        .assign_roles::<DefaultAdminRoutes>(
+            &AssignRolesRequest::new(
+                &realm_name,
+                &user.id,
+                &client.id,
+                &[AssignRoleRequest::new(&role.id, &role.name)],
+            ),
+            &CancellationToken::new(),
+        )
+        .await?;
+
+    log::info!("role assigned to user");
 
     Ok(())
 }

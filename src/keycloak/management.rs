@@ -52,6 +52,18 @@ pub trait KeycloakManagement {
         request: &RoleQuery,
         cancellation_token: &CancellationToken,
     ) -> impl Future<Output = Result<RoleResponse, AppErr>>;
+
+    fn assign_roles<TRoutes: AdminRoutes>(
+        &self,
+        request: &AssignRolesRequest,
+        cancellation_token: &CancellationToken,
+    ) -> impl Future<Output = Result<(), AppErr>>;
+
+    fn update_users_email<TRoutes: AdminRoutes>(
+        &self,
+        request: &UpdateUsersEmailRequest,
+        cancellation_token: &CancellationToken,
+    ) -> impl Future<Output = Result<(), AppErr>>;
 }
 
 pub struct DefaultKeycloakManagement<'a, TAuthorization, THost>
@@ -330,6 +342,86 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, THost: HostAddressProvider> K
             }
         }
     }
+
+    async fn assign_roles<TRoutes: AdminRoutes>(
+        &self,
+        request: &AssignRolesRequest,
+        cancellation_token: &CancellationToken,
+    ) -> Result<(), AppErr> {
+        let url = TRoutes::get_assign_roles_query_route(
+            self.host_provider,
+            &request.realm,
+            &request.user_uuid,
+            &request.client_uuid,
+        )
+        .await?;
+
+        let token = self
+            .auth_provider
+            .get_access_token::<TRoutes>(cancellation_token)
+            .await?;
+
+        let response = select! {
+            resp = Client::new().post(url).bearer_auth(token.access_token).json(&request.assign_roles).send() => {
+                resp.map_err(|err| AppErr::from_owned(format!("roles assignment err: {err}")))
+            }
+            _ = cancellation_token.cancelled() => Result::<Response, AppErr>::Err(AppErr::from("roles assignment cancelled"))
+        }?;
+
+        let status = response.status();
+        let body = response
+            .text()
+            .await
+            .inspect_err(|err| log::warn!("cannot read body on roles assignment: {err}"))
+            .ok()
+            .unwrap_or("".to_owned());
+
+        match status {
+            StatusCode::OK => Ok(()),
+            StatusCode::CREATED => Ok(()),
+            StatusCode::NO_CONTENT => Ok(()),
+            _ => Err(AppErr::from_owned(format!(
+                "roles assignment status code: {status} with body {body}"
+            ))),
+        }
+    }
+
+    async fn update_users_email<TRoutes: AdminRoutes>(
+        &self,
+        request: &UpdateUsersEmailRequest,
+        cancellation_token: &CancellationToken,
+    ) -> Result<(), AppErr> {
+        let url =
+            TRoutes::get_update_user_route(self.host_provider, &request.realm, &request.user_uuid)
+                .await?;
+
+        let token = self
+            .auth_provider
+            .get_access_token::<TRoutes>(cancellation_token)
+            .await?;
+
+        let response = select! {
+            resp = Client::new().put(url).bearer_auth(token.access_token).json(request).send() => resp.map_err(|err| AppErr::from_owned(format!("create realm http error: {err}"))),
+            _ = cancellation_token.cancelled() => Result::<Response, AppErr>::Err(AppErr::from("update user's email request cancelled"))
+        }?;
+
+        let status = response.status();
+        let body = response
+            .text()
+            .await
+            .inspect_err(|err| log::warn!("cannot read body on update user's email: {err}"))
+            .ok()
+            .unwrap_or("".to_owned());
+
+        match status {
+            StatusCode::OK => Ok(()),
+            StatusCode::CREATED => Ok(()),
+            StatusCode::NO_CONTENT => Ok(()),
+            _ => Err(AppErr::from_owned(format!(
+                "update user's email status code: {status} with body {body}"
+            ))),
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -500,4 +592,64 @@ impl RoleQuery {
 pub struct RoleResponse {
     pub id: String,
     pub name: String,
+}
+
+pub struct AssignRolesRequest {
+    pub realm: String,
+    pub user_uuid: String,
+    pub client_uuid: String,
+    pub assign_roles: Vec<AssignRoleRequest>,
+}
+
+impl AssignRolesRequest {
+    pub fn new(
+        realm: &str,
+        user_uuid: &str,
+        client_uuid: &str,
+        assign_roles: &[AssignRoleRequest],
+    ) -> Self {
+        AssignRolesRequest {
+            realm: realm.to_owned(),
+            user_uuid: user_uuid.to_owned(),
+            client_uuid: client_uuid.to_owned(),
+            assign_roles: assign_roles.to_vec(),
+        }
+    }
+}
+
+#[derive(Serialize, Clone)]
+pub struct AssignRoleRequest {
+    pub id: String,
+    pub name: String,
+}
+
+impl AssignRoleRequest {
+    pub fn new(id: &str, name: &str) -> Self {
+        AssignRoleRequest {
+            id: id.to_owned(),
+            name: name.to_owned(),
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct UpdateUsersEmailRequest {
+    #[serde(skip)]
+    pub realm: String,
+    #[serde(skip)]
+    pub user_uuid: String,
+    pub email: String,
+    #[serde(rename = "emailVerified")]
+    pub email_verified: bool,
+}
+
+impl UpdateUsersEmailRequest {
+    pub fn new_verified(realm: &str, user_uuid: &str, email: &str) -> Self {
+        UpdateUsersEmailRequest {
+            realm: realm.to_owned(),
+            user_uuid: user_uuid.to_owned(),
+            email: email.to_owned(),
+            email_verified: true,
+        }
+    }
 }

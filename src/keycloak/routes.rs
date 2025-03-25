@@ -45,6 +45,19 @@ pub trait AdminRoutes {
         client_uuid: &str,
         role_name: &str,
     ) -> impl Future<Output = Result<String, AppErr>>;
+
+    fn get_assign_roles_query_route<THost: HostAddressProvider>(
+        provider: &THost,
+        realm: &str,
+        user_uuid: &str,
+        client_uuid: &str,
+    ) -> impl Future<Output = Result<String, AppErr>>;
+
+    fn get_update_user_route<THost: HostAddressProvider>(
+        provider: &THost,
+        realm: &str,
+        user_uuid: &str,
+    ) -> impl Future<Output = Result<String, AppErr>>;
 }
 
 pub struct DefaultAdminRoutes;
@@ -136,6 +149,33 @@ impl AdminRoutes for DefaultAdminRoutes {
         Ok(format!(
             "{0}/admin/realms/{1}/clients/{2}/roles/{3}",
             host, realm, client_uuid, role_name
+        ))
+    }
+
+    async fn get_assign_roles_query_route<THost: HostAddressProvider>(
+        provider: &THost,
+        realm: &str,
+        user_uuid: &str,
+        client_uuid: &str,
+    ) -> Result<String, AppErr> {
+        let host = provider.get_host().await?;
+
+        Ok(format!(
+            "{0}/admin/realms/{1}/users/{2}/role-mappings/clients/{3}",
+            host, realm, user_uuid, client_uuid,
+        ))
+    }
+
+    async fn get_update_user_route<THost: HostAddressProvider>(
+        provider: &THost,
+        realm: &str,
+        user_uuid: &str,
+    ) -> Result<String, AppErr> {
+        let host = provider.get_host().await?;
+
+        Ok(format!(
+            "{0}/admin/realms/{1}/users/{2}",
+            host, realm, user_uuid
         ))
     }
 }
