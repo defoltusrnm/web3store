@@ -3,7 +3,7 @@ use std::env;
 use crate::utils::errors::AppErr;
 
 pub trait HostAddressProvider {
-    fn get_host(self) -> impl Future<Output = Result<String, AppErr>>;
+    fn get_host(&self) -> impl Future<Output = Result<String, AppErr>>;
 }
 
 pub struct EnvHostAddressProvider {
@@ -17,8 +17,8 @@ impl EnvHostAddressProvider {
 }
 
 impl HostAddressProvider for EnvHostAddressProvider {
-    async fn get_host(self) -> Result<String, AppErr> {
-        env::var(self.host_env)
+    async fn get_host(&self) -> Result<String, AppErr> {
+        env::var(self.host_env.clone())
             .map_err(|err| AppErr::from_owned(format!("cannot get login env: {err}")))
     }
 }

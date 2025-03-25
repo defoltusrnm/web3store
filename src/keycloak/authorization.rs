@@ -14,36 +14,54 @@ use super::{
 };
 use crate::utils::errors::AppErr;
 
-pub trait AdminAccessTokenProvider<TRoutes, THostProvider, TAdminCredentialProvider>
-where
-    TRoutes: AdminRoutes,
-    THostProvider: HostAddressProvider,
-    TAdminCredentialProvider: AdminCredentialProvider,
-{
-    fn get_access_token(
-        host_provider: THostProvider,
-        credential_provider: TAdminCredentialProvider,
-        cancellation_token: CancellationToken,
-    ) -> impl Future<Output = Result<AccessTokenResponse, AppErr>>;
+pub trait AdminAccessTokenProvider {
+    fn get_access_token<TRoutes>(
+        &self,
+        cancellation_token: &CancellationToken,
+    ) -> impl Future<Output = Result<AccessTokenResponse, AppErr>>
+    where
+        TRoutes: AdminRoutes;
 }
 
-pub struct DefaultAdminTokenProvider;
-
-impl<THostProvider, TAdminCredentialProvider>
-    AdminAccessTokenProvider<DefaultAdminRoutes, THostProvider, TAdminCredentialProvider>
-    for DefaultAdminTokenProvider
+pub struct DefaultAdminTokenProvider<'a, THostProvider, TAdminCredentialProvider>
 where
     THostProvider: HostAddressProvider,
     TAdminCredentialProvider: AdminCredentialProvider,
 {
-    async fn get_access_token(
+    host_provider: &'a THostProvider,
+    credentials_provider: &'a TAdminCredentialProvider,
+}
+
+impl<THostProvider, TAdminCredentialProvider>
+    DefaultAdminTokenProvider<THostProvider, TAdminCredentialProvider>
+where
+    THostProvider: HostAddressProvider,
+    TAdminCredentialProvider: AdminCredentialProvider,
+{
+    pub fn new(
         host_provider: THostProvider,
-        credential_provider: TAdminCredentialProvider,
-        cancellation_token: CancellationToken,
+        credentials_provider: TAdminCredentialProvider,
+    ) -> Self {
+        DefaultAdminTokenProvider {
+            host_provider,
+            credentials_provider,
+        }
+    }
+}
+
+impl<THostProvider, TAdminCredentialProvider> AdminAccessTokenProvider
+    for DefaultAdminTokenProvider<THostProvider, TAdminCredentialProvider>
+where
+    THostProvider: HostAddressProvider,
+    TAdminCredentialProvider: AdminCredentialProvider,
+{
+    async fn get_access_token<TRoutes: AdminRoutes>(
+        &self,
+        cancellation_token: &CancellationToken,
     ) -> Result<AccessTokenResponse, AppErr> {
-        let auth_route = DefaultAdminRoutes::get_access_token_route(host_provider).await?;
-        let login = credential_provider.get_login().await?;
-        let password = credential_provider.get_password().await?;
+        let auth_route = TRoutes::get_access_token_route(&self.host_provider).await?;
+        let login = self.credentials_provider.get_login().await?;
+        let password = self.credentials_provider.get_password().await?;
 
         let mut form_data = HashMap::new();
         form_data.insert("client_id", "admin-cli");
