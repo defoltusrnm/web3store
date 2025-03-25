@@ -4,6 +4,7 @@ pub mod utils;
 extern crate axum;
 use std::time::Duration;
 
+use axum::{Router, routing::get};
 use keycloak::{
     authorization::DefaultAdminTokenProvider,
     credentials::EnvAdminCredentialProvider,
@@ -53,6 +54,16 @@ async fn main() -> Result<(), AppErr> {
             &env_var("KEYCLOAK_VENDOR_ROLE")?,
         ))
         .await?;
+
+    let app = Router::new().route("/", get(|| async { "Hello, World!" }));
+
+    let listener = tokio::net::TcpListener::bind(env_var("SERVICE_HOST")?)
+        .await
+        .map_err(|err| AppErr::from_owned(format!("failed to bind: {err}")))?;
+
+    axum::serve(listener, app)
+        .await
+        .map_err(|err| AppErr::from_owned(format!("server failed {err}")))?;
 
     Ok(())
 }

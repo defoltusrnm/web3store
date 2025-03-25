@@ -14,6 +14,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - 4310:4310
     networks:
       - auth_net
     depends_on:
@@ -27,6 +29,7 @@ services:
       - KEYCLOAK_REALM=demo_realm
       - KEYCLOAK_CUSTOMER_ROLE=customer
       - KEYCLOAK_VENDOR_ROLE=vendor
+      - SERVICE_HOST=127.0.0.1:4310
 
 networks:
   auth_net:
