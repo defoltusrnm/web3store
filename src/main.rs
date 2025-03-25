@@ -8,17 +8,9 @@ use keycloak::{
     authorization::DefaultAdminTokenProvider,
     credentials::EnvAdminCredentialProvider,
     host::EnvHostAddressProvider,
-    management::{DefaultKeycloakManagement, KeycloakManagement},
-    queries::{clients::ClientsQuery, role::RoleQuery, users::UsersQuery},
-    requests::{
-        assign_roles::{AssignRoleRequest, AssignRolesRequest},
-        create_client::CreateClientRequest,
-        create_realm::CreateRealmRequest,
-        create_role::CreateRoleRequest,
-        create_user::CreateUserRequest,
-        update_users_email_request::UpdateUsersEmailRequest,
-    },
+    management::DefaultKeycloakManagement,
     routes::DefaultAdminRoutes,
+    seeding::{DefaultKeycloakSeeding, KeycloakSeeding, KeycloakSeedingArguments},
     watcher::{DefaultKeycloakWatcher, KeycloakWatcher},
 };
 use tokio_util::sync::CancellationToken;
@@ -28,11 +20,6 @@ use utils::{dotenv::configure_dotenv, env::env_var, errors::AppErr, logging::con
 async fn main() -> Result<(), AppErr> {
     configure_dotenv();
     _ = configure_logs(log::LevelFilter::Info)?;
-
-    let realm_name = env_var("KEYCLOAK_REALM")?;
-    let client_name = env_var("KEYCLOAK_CLIENT")?;
-    let client_secret = env_var("KEYCLOAK_CLIENT_SECRET")?;
-    let role_name = env_var("KEYCLOAK_ROLE")?;
 
     let host_provider = &EnvHostAddressProvider::new("KEYCLOAK_HOST");
     let credentials_provider =
@@ -55,102 +42,17 @@ async fn main() -> Result<(), AppErr> {
         .await?;
 
     let keycloak_manager = &DefaultKeycloakManagement::new(auth_provider, routes);
+    let keycloak_seeder = &DefaultKeycloakSeeding::new(keycloak_manager);
 
-    keycloak_manager
-        .create_realm(
-            &CreateRealmRequest::new(&realm_name),
-            &CancellationToken::new(),
-        )
+    keycloak_seeder
+        .seed(KeycloakSeedingArguments::new(
+            &env_var("KEYCLOAK_REALM")?,
+            &env_var("KEYCLOAK_CLIENT")?,
+            &env_var("KEYCLOAK_CLIENT_SECRET")?,
+            &env_var("KEYCLOAK_CUSTOMER_ROLE")?,
+            &env_var("KEYCLOAK_VENDOR_ROLE")?,
+        ))
         .await?;
-
-    log::info!("realm created");
-
-    keycloak_manager
-        .create_client(
-            &CreateClientRequest::new(&client_name, &realm_name, &client_secret),
-            &CancellationToken::new(),
-        )
-        .await?;
-
-    log::info!("client created");
-
-    let clients = keycloak_manager
-        .query_clients(
-            &ClientsQuery::new(&realm_name, &client_name),
-            &CancellationToken::new(),
-        )
-        .await?;
-
-    let client = clients
-        .get(0)
-        .map(Result::Ok)
-        .unwrap_or(Result::Err(AppErr::from("cannot get client from payload")))?;
-
-    log::info!("got client: {0}, {1}", client.id, client.client_id);
-
-    keycloak_manager
-        .create_role(
-            &CreateRoleRequest::new(&realm_name, &client.id, &role_name, "some_role"),
-            &CancellationToken::new(),
-        )
-        .await?;
-
-    log::info!("role created");
-
-    let role = keycloak_manager
-        .query_role(
-            &RoleQuery::new(&realm_name, &client.id, &role_name),
-            &CancellationToken::new(),
-        )
-        .await?;
-
-    log::info!("got role {0}, {1}", role.id, role.name);
-
-    keycloak_manager
-        .create_user(
-            &CreateUserRequest::new(&realm_name, "test1", "test"),
-            &CancellationToken::new(),
-        )
-        .await?;
-
-    log::info!("user created");
-
-    let users = keycloak_manager
-        .query_users(
-            &UsersQuery::new(&realm_name, "test1"),
-            &CancellationToken::new(),
-        )
-        .await?;
-
-    let user = users
-        .get(0)
-        .map(Result::Ok)
-        .unwrap_or(Result::Err(AppErr::from("cannot get user from payload")))?;
-
-    log::info!("got user: {0}, {1}", user.id, user.username);
-
-    keycloak_manager
-        .update_users_email(
-            &UpdateUsersEmailRequest::new_verified(&realm_name, &user.id, "test@test.test"),
-            &CancellationToken::new(),
-        )
-        .await?;
-
-    log::info!("user's email updated");
-
-    keycloak_manager
-        .assign_roles(
-            &AssignRolesRequest::new(
-                &realm_name,
-                &user.id,
-                &client.id,
-                &[AssignRoleRequest::new(&role.id, &role.name)],
-            ),
-            &CancellationToken::new(),
-        )
-        .await?;
-
-    log::info!("role assigned to user");
 
     Ok(())
 }

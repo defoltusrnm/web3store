@@ -7,3 +7,4 @@ pub mod requests;
 pub mod queries;
 pub mod responses;
 pub mod watcher;
+pub mod seeding;
