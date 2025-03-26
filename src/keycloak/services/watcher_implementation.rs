@@ -5,14 +5,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::utils::errors::AppErr;
 
-use super::authorization::AdminAccessTokenProvider;
-
-pub trait KeycloakWatcher {
-    fn watch(
-        &self,
-        cancellation_token: &CancellationToken,
-    ) -> impl Future<Output = Result<(), AppErr>>;
-}
+use super::{authorization::AdminAccessTokenProvider, watcher::KeycloakWatcher};
 
 pub struct DefaultKeycloakWatcher<'a, TAuthorization: AdminAccessTokenProvider> {
     auth_provider: &'a TAuthorization,

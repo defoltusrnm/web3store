@@ -1,21 +1,16 @@
 use std::collections::HashMap;
 
-use derive_more::Display;
 use http::StatusCode;
 use reqwest::{Client, Response};
-use serde::Deserialize;
 use tokio::select;
 use tokio_util::sync::CancellationToken;
 
-use super::{credentials::AdminCredentialProvider, routes::AdminRoutes};
 use crate::utils::errors::AppErr;
 
-pub trait AdminAccessTokenProvider {
-    fn get_access_token(
-        &self,
-        cancellation_token: &CancellationToken,
-    ) -> impl Future<Output = Result<AccessTokenResponse, AppErr>>;
-}
+use super::{
+    authorization::AdminAccessTokenProvider, credentials::AdminCredentialProvider,
+    responses::access_token::AccessTokenResponse, routes::AdminRoutes,
+};
 
 pub struct DefaultAdminTokenProvider<'a, TRoutes, TAdminCredentialProvider>
 where
@@ -77,9 +72,4 @@ where
             _ => Err(AppErr::from("da fuq")),
         }
     }
-}
-
-#[derive(Deserialize, Display)]
-pub struct AccessTokenResponse {
-    pub access_token: String,
 }
