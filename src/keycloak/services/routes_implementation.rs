@@ -1,6 +1,9 @@
 use crate::utils::errors::AppErr;
 
-use super::{host::HostAddressProvider, routes::AdminRoutes};
+use super::{
+    host::HostAddressProvider,
+    routes::{AdminRoutes, Routes},
+};
 
 pub struct DefaultAdminRoutes<'a, THost: HostAddressProvider> {
     provider: &'a THost,
@@ -108,6 +111,26 @@ impl<THost: HostAddressProvider> AdminRoutes for DefaultAdminRoutes<'_, THost> {
         Ok(format!(
             "{0}/admin/realms/{1}/users/{2}",
             host, realm, user_uuid
+        ))
+    }
+}
+
+pub struct DefaultRoutes<'a, THost: HostAddressProvider> {
+    provider: &'a THost,
+}
+
+impl<'a, THost: HostAddressProvider> DefaultRoutes<'a, THost> {
+    pub fn new(provider: &'a THost) -> Self {
+        DefaultRoutes { provider }
+    }
+}
+
+impl<'a, THost: HostAddressProvider> Routes for DefaultRoutes<'a, THost> {
+    async fn get_auth_route(&self, realm: &str) -> Result<String, AppErr> {
+        let host = self.provider.get_host().await?;
+
+        Ok(format!(
+            "{host}/realms/{realm}/protocol/openid-connect/token"
         ))
     }
 }

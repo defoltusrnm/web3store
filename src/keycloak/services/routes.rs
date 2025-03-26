@@ -47,3 +47,7 @@ pub trait AdminRoutes {
         user_uuid: &str,
     ) -> impl Future<Output = Result<String, AppErr>>;
 }
+
+pub trait Routes {
+    fn get_auth_route(&self, realm: &str) -> impl Future<Output = Result<String, AppErr>>;
+}
