@@ -1,4 +1,5 @@
 FROM rust:latest
+EXPOSE 4310
 
 COPY ./Cargo.toml ./
 COPY ./src ./src

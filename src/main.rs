@@ -6,14 +6,18 @@ use std::time::Duration;
 
 use axum::{Json, Router, routing::post};
 use http::StatusCode;
-use keycloak::{
-    keycloak_factory::{create_default_manager, create_default_seeder, create_default_watcher},
-    services::{
-        management::KeycloakManagement,
-        requests::create_user::CreateUserRequest,
-        seeding::{KeycloakSeeding, KeycloakSeedingArguments},
-        watcher::KeycloakWatcher,
-    },
+use keycloak::services::{
+    authorization_implementation::DefaultAdminTokenProvider,
+    credentials_implementation::EnvAdminCredentialProvider,
+    host_implementation::EnvHostAddressProvider,
+    management::KeycloakManagement,
+    management_implementation::DefaultKeycloakManagement,
+    requests::create_user::CreateUserRequest,
+    routes_implementation::DefaultAdminRoutes,
+    seeding::{KeycloakSeeding, KeycloakSeedingArguments},
+    seeding_implementation::DefaultKeycloakSeeding,
+    watcher::KeycloakWatcher,
+    watcher_implementation::DefaultKeycloakWatcher,
 };
 use serde::Deserialize;
 use tokio_util::sync::CancellationToken;
@@ -24,7 +28,14 @@ async fn main() -> Result<(), AppErr> {
     configure_dotenv();
     _ = configure_logs(log::LevelFilter::Info)?;
 
-    let keycloak_watcher = create_default_watcher();
+    let host_provider = &EnvHostAddressProvider::new("KEYCLOAK_HOST");
+    let credentials_provider =
+        &EnvAdminCredentialProvider::new("KEYCLOAK_ADMIN_LOGIN", "KEYCLOAK_ADMIN_PASSWORD");
+    let routes = &DefaultAdminRoutes::new(host_provider);
+    let auth_provider = &DefaultAdminTokenProvider::new(routes, credentials_provider);
+    let keycloak_manager = &DefaultKeycloakManagement::new(auth_provider, routes);
+
+    let keycloak_watcher = &DefaultKeycloakWatcher::new(auth_provider);
     let watcher_cancellation = &CancellationToken::new();
     let watcher_cancellation_clone = watcher_cancellation.clone();
 
@@ -36,7 +47,7 @@ async fn main() -> Result<(), AppErr> {
         .watch(&watcher_cancellation.clone())
         .await?;
 
-    let keycloak_seeder = create_default_seeder();
+    let keycloak_seeder = &DefaultKeycloakSeeding::new(keycloak_manager);
 
     keycloak_seeder
         .seed(KeycloakSeedingArguments::new(
@@ -61,21 +72,31 @@ async fn main() -> Result<(), AppErr> {
     Ok(())
 }
 
-fn create_customer_router() -> _ {
-    Router::new().route("api/customers", post(create_customer))
+fn create_customer_router() -> Router {
+    Router::new().route("/api/customers", post(create_customer))
 }
 
 async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> StatusCode {
-    let manager = create_default_manager();
+    let host_provider = &EnvHostAddressProvider::new("KEYCLOAK_HOST");
+    let credentials_provider =
+        &EnvAdminCredentialProvider::new("KEYCLOAK_ADMIN_LOGIN", "KEYCLOAK_ADMIN_PASSWORD");
+    let routes = &DefaultAdminRoutes::new(host_provider);
+    let auth_provider = &DefaultAdminTokenProvider::new(routes, credentials_provider);
+    let manager = &DefaultKeycloakManagement::new(auth_provider, routes);
 
-    manager
-        .create_user(
-            &CreateUserRequest::new(&env_var("REALM_NAME")?, &request.email, &request.password),
-            &CancellationToken::new(),
-        )
-        .await?;
-
-    StatusCode::CREATED
+    match env_var("KEYCLOAK_REALM") {
+        Ok(realm_name) => match manager
+            .create_user(
+                &CreateUserRequest::new(&realm_name, &request.email, &request.password),
+                &CancellationToken::new(),
+            )
+            .await
+        {
+            Ok(_) => StatusCode::CREATED,
+            Err(_) => StatusCode::BAD_REQUEST,
+        },
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+    }
 }
 
 #[derive(Deserialize)]

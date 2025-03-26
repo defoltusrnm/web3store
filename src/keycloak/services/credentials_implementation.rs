@@ -20,12 +20,12 @@ impl<'a> EnvAdminCredentialProvider<'a> {
 
 impl<'a> AdminCredentialProvider for EnvAdminCredentialProvider<'a> {
     async fn get_login(&self) -> Result<String, AppErr> {
-        env::var(self.login_env.clone())
+        env::var(self.login_env)
             .map_err(|err| AppErr::from_owned(format!("cannot get login env: {err}")))
     }
 
     async fn get_password(&self) -> Result<String, AppErr> {
-        env::var(self.password_env.clone())
+        env::var(self.password_env)
             .map_err(|err| AppErr::from_owned(format!("cannot get password env: {err}")))
     }
 }

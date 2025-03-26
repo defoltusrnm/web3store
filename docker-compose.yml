@@ -29,7 +29,7 @@ services:
       - KEYCLOAK_REALM=demo_realm
       - KEYCLOAK_CUSTOMER_ROLE=customer
       - KEYCLOAK_VENDOR_ROLE=vendor
-      - SERVICE_HOST=127.0.0.1:4310
+      - SERVICE_HOST=0.0.0.0:4310
 
 networks:
   auth_net:

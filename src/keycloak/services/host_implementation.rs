@@ -16,7 +16,7 @@ impl<'a> EnvHostAddressProvider<'a> {
 
 impl<'a> HostAddressProvider for EnvHostAddressProvider<'a> {
     async fn get_host(&self) -> Result<String, AppErr> {
-        env::var(self.host_env.clone())
+        env::var(self.host_env)
             .map_err(|err| AppErr::from_owned(format!("cannot get login env: {err}")))
     }
 }
