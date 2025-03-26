@@ -19,6 +19,7 @@ use keycloak::services::{
     watcher::KeycloakWatcher,
     watcher_implementation::DefaultKeycloakWatcher,
 };
+use login::create_login_router;
 use tokio_util::sync::CancellationToken;
 use utils::{dotenv::configure_dotenv, env::env_var, errors::AppErr, logging::configure_logs};
 
@@ -58,7 +59,7 @@ async fn main() -> Result<(), AppErr> {
         ))
         .await?;
 
-    let app = Router::new().merge(create_customer_router());
+    let app = Router::new().merge(create_customer_router()).merge(create_login_router());
 
     let listener = tokio::net::TcpListener::bind(env_var("SERVICE_HOST")?)
         .await
