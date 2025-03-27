@@ -29,29 +29,24 @@ impl<'a, TManager: KeycloakManagement> DefaultKeycloakSeeding<'a, TManager> {
 impl<'a, TManager: KeycloakManagement> KeycloakSeeding for DefaultKeycloakSeeding<'a, TManager> {
     async fn seed<'b>(&self, args: KeycloakSeedingArguments<'b>) -> Result<(), AppErr> {
         self.manager
-            .create_realm(
-                &CreateRealmRequest::new(args.realm_name),
-                &CancellationToken::new(),
-            )
+            .create_realm(&CreateRealmRequest::new(args.realm_name))
             .await?;
 
         log::info!("realm created");
 
         self.manager
-            .create_client(
-                &CreateClientRequest::new(args.client_name, args.realm_name, args.client_secret),
-                &CancellationToken::new(),
-            )
+            .create_client(&CreateClientRequest::new(
+                args.client_name,
+                args.realm_name,
+                args.client_secret,
+            ))
             .await?;
 
         log::info!("client created");
 
         let clients = self
             .manager
-            .query_clients(
-                &ClientsQuery::new(args.realm_name, args.client_name),
-                &CancellationToken::new(),
-            )
+            .query_clients(&ClientsQuery::new(args.realm_name, args.client_name))
             .await?;
 
         let client = clients
@@ -62,19 +57,23 @@ impl<'a, TManager: KeycloakManagement> KeycloakSeeding for DefaultKeycloakSeedin
         log::info!("got client: {0}, {1}", client.id, client.client_id);
 
         self.manager
-            .create_role(
-                &CreateRoleRequest::new(args.realm_name, &client.id, args.customer_role_name, ""),
-                &CancellationToken::new(),
-            )
+            .create_role(&CreateRoleRequest::new(
+                args.realm_name,
+                &client.id,
+                args.customer_role_name,
+                "",
+            ))
             .await?;
 
         log::info!("customer role created");
 
         self.manager
-            .create_role(
-                &CreateRoleRequest::new(args.realm_name, &client.id, args.vendor_role_name, ""),
-                &CancellationToken::new(),
-            )
+            .create_role(&CreateRoleRequest::new(
+                args.realm_name,
+                &client.id,
+                args.vendor_role_name,
+                String::new().as_str(),
+            ))
             .await?;
 
         log::info!("vendor role created");

@@ -45,7 +45,7 @@ where
 impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> KeycloakManagement
     for DefaultKeycloakManagement<'a, TAuthorization, TRoutes>
 {
-    async fn create_realm(
+    async fn create_realm_with_cancel(
         &self,
         request: &CreateRealmRequest,
         cancellation_token: &CancellationToken,
@@ -54,7 +54,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
 
         let token = self
             .auth_provider
-            .get_access_token(cancellation_token)
+            .get_access_token_with_cancel(cancellation_token)
             .await?;
 
         let create_realm_response = select! {
@@ -66,7 +66,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
         Ok(())
     }
 
-    async fn create_client(
+    async fn create_client_with_cancel(
         &self,
         request: &CreateClientRequest,
         cancellation_token: &CancellationToken,
@@ -75,7 +75,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
 
         let token = self
             .auth_provider
-            .get_access_token(cancellation_token)
+            .get_access_token_with_cancel(cancellation_token)
             .await?;
 
         let create_client_response = select! {
@@ -87,7 +87,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
         Ok(())
     }
 
-    async fn create_user(
+    async fn create_user_with_cancel(
         &self,
         request: &CreateUserRequest,
         cancellation_token: &CancellationToken,
@@ -96,7 +96,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
 
         let token = self
             .auth_provider
-            .get_access_token(cancellation_token)
+            .get_access_token_with_cancel(cancellation_token)
             .await?;
 
         let create_user_response = select! {
@@ -108,7 +108,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
         Ok(())
     }
 
-    async fn query_users(
+    async fn query_users_with_cancel(
         &self,
         request: &UsersQuery,
         cancellation_token: &CancellationToken,
@@ -120,7 +120,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
 
         let token = self
             .auth_provider
-            .get_access_token(cancellation_token)
+            .get_access_token_with_cancel(cancellation_token)
             .await?;
 
         let response = select! {
@@ -132,7 +132,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
         Ok(users)
     }
 
-    async fn query_clients(
+    async fn query_clients_with_cancel(
         &self,
         request: &ClientsQuery,
         cancellation_token: &CancellationToken,
@@ -144,7 +144,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
 
         let token = self
             .auth_provider
-            .get_access_token(cancellation_token)
+            .get_access_token_with_cancel(cancellation_token)
             .await?;
 
         let response = select! {
@@ -158,7 +158,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
         Ok(clients)
     }
 
-    async fn create_role(
+    async fn create_role_with_cancel(
         &self,
         request: &CreateRoleRequest,
         cancellation_token: &CancellationToken,
@@ -170,7 +170,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
 
         let token = self
             .auth_provider
-            .get_access_token(cancellation_token)
+            .get_access_token_with_cancel(cancellation_token)
             .await?;
 
         let create_role_response = select! {
@@ -182,7 +182,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
         Ok(())
     }
 
-    async fn query_role(
+    async fn query_role_with_cancel(
         &self,
         request: &RoleQuery,
         cancellation_token: &CancellationToken,
@@ -194,7 +194,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
 
         let token = self
             .auth_provider
-            .get_access_token(cancellation_token)
+            .get_access_token_with_cancel(cancellation_token)
             .await?;
 
         let response = select! {
@@ -206,7 +206,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
         Ok(role)
     }
 
-    async fn assign_roles(
+    async fn assign_roles_with_cancel(
         &self,
         request: &AssignRolesRequest,
         cancellation_token: &CancellationToken,
@@ -218,7 +218,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
 
         let token = self
             .auth_provider
-            .get_access_token(cancellation_token)
+            .get_access_token_with_cancel(cancellation_token)
             .await?;
 
         let response = select! {
@@ -230,7 +230,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
         Ok(())
     }
 
-    async fn update_users_email(
+    async fn update_users_email_with_cancel(
         &self,
         request: &UpdateUsersEmailRequest,
         cancellation_token: &CancellationToken,
@@ -242,7 +242,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
 
         let token = self
             .auth_provider
-            .get_access_token(cancellation_token)
+            .get_access_token_with_cancel(cancellation_token)
             .await?;
 
         let response = select! {
@@ -252,5 +252,51 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
 
         response.ensure_success().await?;
         Ok(())
+    }
+
+    async fn create_realm(&self, request: &CreateRealmRequest) -> Result<(), AppErr> {
+        let ct = &CancellationToken::new();
+        let resp = self.create_realm_with_cancel(request, ct).await;
+        resp
+    }
+
+    async fn create_client(&self, request: &CreateClientRequest) -> Result<(), AppErr> {
+        self.create_client_with_cancel(request, &CancellationToken::new())
+            .await
+    }
+
+    async fn create_user(&self, request: &CreateUserRequest) -> Result<(), AppErr> {
+        self.create_user_with_cancel(request, &CancellationToken::new())
+            .await
+    }
+
+    async fn query_users(&self, request: &UsersQuery) -> Result<Vec<UserResponse>, AppErr> {
+        self.query_users_with_cancel(request, &CancellationToken::new())
+            .await
+    }
+
+    async fn query_clients(&self, request: &ClientsQuery) -> Result<Vec<ClientResponse>, AppErr> {
+        self.query_clients_with_cancel(request, &CancellationToken::new())
+            .await
+    }
+
+    async fn create_role(&self, request: &CreateRoleRequest) -> Result<(), AppErr> {
+        self.create_role_with_cancel(request, &CancellationToken::new())
+            .await
+    }
+
+    async fn query_role(&self, request: &RoleQuery) -> Result<RoleResponse, AppErr> {
+        self.query_role_with_cancel(request, &CancellationToken::new())
+            .await
+    }
+
+    async fn assign_roles(&self, request: &AssignRolesRequest) -> Result<(), AppErr> {
+        self.assign_roles_with_cancel(request, &CancellationToken::new())
+            .await
+    }
+
+    async fn update_users_email(&self, request: &UpdateUsersEmailRequest) -> Result<(), AppErr> {
+        self.update_users_email_with_cancel(request, &CancellationToken::new())
+            .await
     }
 }

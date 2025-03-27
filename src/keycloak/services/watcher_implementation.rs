@@ -28,10 +28,9 @@ where
         loop {
             log::info!("pinging keycloak service");
             sleep(Duration::from_secs(3)).await;
-            let inner_token = &CancellationToken::new();
 
             select! {
-                token = self.auth_provider.get_access_token(inner_token) => {
+                token = self.auth_provider.get_access_token() => {
                     if token.inspect_err(|err| log::error!("ping err: {err}")).is_ok() {
                         log::info!("keycloak is online");
                         return Ok(());

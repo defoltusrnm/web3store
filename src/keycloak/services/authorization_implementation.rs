@@ -40,7 +40,7 @@ where
     TRoutes: AdminRoutes,
     TAdminCredentialProvider: AdminCredentialProvider,
 {
-    async fn get_access_token(
+    async fn get_access_token_with_cancel(
         &self,
         cancellation_token: &CancellationToken,
     ) -> Result<AccessTokenResponse, AppErr> {
@@ -67,5 +67,10 @@ where
             .ensure_success_json::<AccessTokenResponse>()
             .await?;
         Ok(token)
+    }
+
+    async fn get_access_token(&self) -> Result<AccessTokenResponse, AppErr> {
+        self.get_access_token_with_cancel(&CancellationToken::new())
+            .await
     }
 }

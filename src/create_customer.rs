@@ -1,7 +1,6 @@
 use axum::{Json, Router, response::Result, routing::post};
 use http::StatusCode;
 use serde::Deserialize;
-use tokio_util::sync::CancellationToken;
 
 use crate::{
     keycloak::{
@@ -41,10 +40,7 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
     let role_name = env_var("KEYCLOAK_CUSTOMER_ROLE")?;
 
     let clients = manager
-        .query_clients(
-            &ClientsQuery::new(&realm_name, &client_name),
-            &CancellationToken::new(),
-        )
+        .query_clients(&ClientsQuery::new(&realm_name, &client_name))
         .await_err_as_failed_dependency()
         .await?;
 
@@ -57,26 +53,21 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
         )))?;
 
     let role = manager
-        .query_role(
-            &RoleQuery::new(&realm_name, &client.id, &role_name),
-            &CancellationToken::new(),
-        )
+        .query_role(&RoleQuery::new(&realm_name, &client.id, &role_name))
         .await_err_as_failed_dependency()
         .await?;
 
     manager
-        .create_user(
-            &CreateUserRequest::new(&realm_name, &request.email, &request.password),
-            &CancellationToken::new(),
-        )
+        .create_user(&CreateUserRequest::new(
+            &realm_name,
+            &request.email,
+            &request.password,
+        ))
         .await_err_as_failed_dependency()
         .await?;
 
     let users = manager
-        .query_users(
-            &UsersQuery::new(&realm_name, &request.email),
-            &CancellationToken::new(),
-        )
+        .query_users(&UsersQuery::new(&realm_name, &request.email))
         .await_err_as_failed_dependency()
         .await?;
 
@@ -86,23 +77,21 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
     )))?;
 
     manager
-        .update_users_email(
-            &UpdateUsersEmailRequest::new_verified(&realm_name, &user.id, &request.email),
-            &CancellationToken::new(),
-        )
+        .update_users_email(&UpdateUsersEmailRequest::new_verified(
+            &realm_name,
+            &user.id,
+            &request.email,
+        ))
         .await_err_as_failed_dependency()
         .await?;
 
     manager
-        .assign_roles(
-            &AssignRolesRequest::new(
-                &realm_name,
-                &user.id,
-                &client.id,
-                &[AssignRoleRequest::new(&role.id, &role.name)],
-            ),
-            &CancellationToken::new(),
-        )
+        .assign_roles(&AssignRolesRequest::new(
+            &realm_name,
+            &user.id,
+            &client.id,
+            &[AssignRoleRequest::new(&role.id, &role.name)],
+        ))
         .await_err_as_failed_dependency()
         .await?;
 
