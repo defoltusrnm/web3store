@@ -4,19 +4,22 @@ use serde::Deserialize;
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    keycloak::services::{
-        authorization_implementation::DefaultAdminTokenProvider,
-        credentials_implementation::EnvAdminCredentialProvider,
-        host_implementation::EnvHostAddressProvider,
-        management::KeycloakManagement,
-        management_implementation::DefaultKeycloakManagement,
-        queries::{clients::ClientsQuery, role::RoleQuery, users::UsersQuery},
-        requests::{
-            assign_roles::{AssignRoleRequest, AssignRolesRequest},
-            create_user::CreateUserRequest,
-            update_users_email_request::UpdateUsersEmailRequest,
+    keycloak::{
+        keycloak_ex::KeycloakExtensions,
+        services::{
+            authorization_implementation::DefaultAdminTokenProvider,
+            credentials_implementation::EnvAdminCredentialProvider,
+            host_implementation::EnvHostAddressProvider,
+            management::KeycloakManagement,
+            management_implementation::DefaultKeycloakManagement,
+            queries::{clients::ClientsQuery, role::RoleQuery, users::UsersQuery},
+            requests::{
+                assign_roles::{AssignRoleRequest, AssignRolesRequest},
+                create_user::CreateUserRequest,
+                update_users_email_request::UpdateUsersEmailRequest,
+            },
+            routes_implementation::DefaultAdminRoutes,
         },
-        routes_implementation::DefaultAdminRoutes,
     },
     utils::{env::env_var, errors::HttpAppErr},
 };
@@ -42,9 +45,8 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
             &ClientsQuery::new(&realm_name, &client_name),
             &CancellationToken::new(),
         )
-        .await
-        .inspect_err(|err| log::error!("failed to retrieve client: {err}"))
-        .map_err(HttpAppErr::failed_dependency)?;
+        .await_err_as_failed_dependency()
+        .await?;
 
     let client = clients
         .get(0)
@@ -59,27 +61,24 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
             &RoleQuery::new(&realm_name, &client.id, &role_name),
             &CancellationToken::new(),
         )
-        .await
-        .inspect_err(|err| log::error!("failed to retrieve role: {err}"))
-        .map_err(HttpAppErr::failed_dependency)?;
+        .await_err_as_failed_dependency()
+        .await?;
 
     manager
         .create_user(
             &CreateUserRequest::new(&realm_name, &request.email, &request.password),
             &CancellationToken::new(),
         )
-        .await
-        .inspect_err(|err| log::error!("failed to create user: {err}"))
-        .map_err(HttpAppErr::failed_dependency)?;
+        .await_err_as_failed_dependency()
+        .await?;
 
     let users = manager
         .query_users(
             &UsersQuery::new(&realm_name, &request.email),
             &CancellationToken::new(),
         )
-        .await
-        .inspect_err(|err| log::error!("failed to retrieve user: {err}"))
-        .map_err(HttpAppErr::failed_dependency)?;
+        .await_err_as_failed_dependency()
+        .await?;
 
     let user = users.get(0).map(Result::Ok).unwrap_or(Err(HttpAppErr::new(
         StatusCode::INTERNAL_SERVER_ERROR,
@@ -91,9 +90,8 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
             &UpdateUsersEmailRequest::new_verified(&realm_name, &user.id, &request.email),
             &CancellationToken::new(),
         )
-        .await
-        .inspect_err(|err| log::error!("failed to update user email: {err}"))
-        .map_err(HttpAppErr::failed_dependency)?;
+        .await_err_as_failed_dependency()
+        .await?;
 
     manager
         .assign_roles(
@@ -105,9 +103,8 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
             ),
             &CancellationToken::new(),
         )
-        .await
-        .inspect_err(|err| log::error!("failed to update user email: {err}"))
-        .map_err(HttpAppErr::failed_dependency)?;
+        .await_err_as_failed_dependency()
+        .await?;
 
     Ok(StatusCode::CREATED)
 }

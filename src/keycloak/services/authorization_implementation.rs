@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use http::StatusCode;
 use reqwest::{Client, Response};
 use tokio::select;
 use tokio_util::sync::CancellationToken;
@@ -8,10 +7,8 @@ use tokio_util::sync::CancellationToken;
 use crate::utils::{errors::AppErr, http::ResponseExtended};
 
 use super::{
-    authorization::AdminAccessTokenProvider,
-    credentials::AdminCredentialProvider,
-    responses::{self, access_token::AccessTokenResponse},
-    routes::AdminRoutes,
+    authorization::AdminAccessTokenProvider, credentials::AdminCredentialProvider,
+    responses::access_token::AccessTokenResponse, routes::AdminRoutes,
 };
 
 pub struct DefaultAdminTokenProvider<'a, TRoutes, TAdminCredentialProvider>
