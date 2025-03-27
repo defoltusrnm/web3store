@@ -3,7 +3,7 @@ use reqwest::{Client, Response};
 use tokio::select;
 use tokio_util::sync::CancellationToken;
 
-use crate::utils::errors::AppErr;
+use crate::utils::{errors::AppErr, http::SendExtended};
 
 use super::{
     authorization::AdminAccessTokenProvider,
@@ -56,8 +56,8 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let create_realm_response = select! {
-            resp = Client::new().post(url).bearer_auth(token.access_token).json(request).send() => resp.map_err(|err| AppErr::from_owned(format!("create realm http error: {err}"))),
-            _ = cancellation_token.cancelled() => Result::<Response, AppErr>::Err(AppErr::from("create realm request cancelled"))
+            resp = Client::new().post_json(&url, request, Some(token.access_token)) => resp,
+            _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 
         let status = create_realm_response.status();
@@ -83,8 +83,8 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let create_client_response = select! {
-            resp = Client::new().post(url).bearer_auth(token.access_token).json(request).send() => resp.map_err(|err| AppErr::from_owned(format!("create realm http error: {err}"))),
-            _ = cancellation_token.cancelled() => Result::<Response, AppErr>::Err(AppErr::from("create realm request cancelled"))
+            resp = Client::new().post_json(&url, request, Some(token.access_token)) => resp,
+            _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 
         let status = create_client_response.status();
@@ -110,7 +110,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let create_user_response = select! {
-            resp = Client::new().post(url).bearer_auth(token.access_token).json(request).send() => resp.map_err(|err| AppErr::from_owned(format!("create realm http error: {err}"))),
+            resp = Client::new().post_json(&url, request, Some(token.access_token)) => resp,
             _ = cancellation_token.cancelled() => Result::<Response, AppErr>::Err(AppErr::from("create realm request cancelled"))
         }?;
 
@@ -229,8 +229,8 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let create_role_response = select! {
-            resp = Client::new().post(url).bearer_auth(token.access_token).json(request).send() => resp.map_err(|err| AppErr::from_owned(format!("create role http error: {err}"))),
-            _ = cancellation_token.cancelled() => Result::<Response, AppErr>::Err(AppErr::from("create role request cancelled"))
+            resp = Client::new().post_json(&url, request, Some(token.access_token)) => resp,
+            _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 
         let status = create_role_response.status();
@@ -305,10 +305,8 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let response = select! {
-            resp = Client::new().post(url).bearer_auth(token.access_token).json(&request.assign_roles).send() => {
-                resp.map_err(|err| AppErr::from_owned(format!("roles assignment err: {err}")))
-            }
-            _ = cancellation_token.cancelled() => Result::<Response, AppErr>::Err(AppErr::from("roles assignment cancelled"))
+            resp = Client::new().post_json(&url, &request.assign_roles, Some(token.access_token)) =>  resp,
+            _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 
         let status = response.status();
@@ -345,8 +343,8 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let response = select! {
-            resp = Client::new().put(url).bearer_auth(token.access_token).json(request).send() => resp.map_err(|err| AppErr::from_owned(format!("create realm http error: {err}"))),
-            _ = cancellation_token.cancelled() => Result::<Response, AppErr>::Err(AppErr::from("update user's email request cancelled"))
+            resp = Client::new().post_json(&url, &request, Some(token.access_token)) => resp,
+            _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 
         let status = response.status();

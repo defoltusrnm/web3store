@@ -17,6 +17,9 @@ impl AppErr {
             msg: msg.to_owned(),
         }
     }
+    pub fn cancelled<T>() -> Result<T, AppErr> {
+        Result::<T, AppErr>::Err(AppErr::from("op cancelled"))
+    }
 }
 
 pub struct HttpAppErr {
