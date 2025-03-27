@@ -53,7 +53,7 @@ impl HttpAppErr {
 impl IntoResponse for HttpAppErr {
     fn into_response(self) -> axum::response::Response {
         let error_msg = HttpErrorMessage {
-            title: self.status.as_str().to_owned(),
+            title: self.status.canonical_reason().unwrap_or(self.status.as_str()).to_owned(),
             status: self.status.as_u16(),
             reason: self.reason,
         };

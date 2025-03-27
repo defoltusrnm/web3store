@@ -246,7 +246,7 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let response = select! {
-            resp = Client::new().quick_post(&url, &request, Some(token.access_token)) => resp,
+            resp = Client::new().quick_put(&url, &request, Some(token.access_token)) => resp,
             _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 

@@ -2,6 +2,7 @@ pub mod create_customer;
 pub mod keycloak;
 pub mod login;
 pub mod utils;
+pub mod refresh_token;
 
 extern crate axum;
 use std::time::Duration;
@@ -20,6 +21,7 @@ use keycloak::services::{
     watcher_implementation::DefaultKeycloakWatcher,
 };
 use login::create_login_router;
+use refresh_token::create_refresh_token_router;
 use tokio_util::sync::CancellationToken;
 use utils::{
     async_ex::AsyncResult, dotenv::configure_dotenv, env::env_var, errors::AppErr,
@@ -64,7 +66,8 @@ async fn main() -> Result<(), AppErr> {
 
     let app = Router::new()
         .merge(create_customer_router())
-        .merge(create_login_router());
+        .merge(create_login_router())
+        .merge(create_refresh_token_router());
 
     let listener = tokio::net::TcpListener::bind(env_var("SERVICE_HOST")?)
         .await_map_err(|err| AppErr::from_owned(format!("failed to bind: {err}")))

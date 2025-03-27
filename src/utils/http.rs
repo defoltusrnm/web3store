@@ -67,6 +67,12 @@ pub trait SendExtended {
         body: &Body,
         access_token: Option<T>,
     ) -> impl Future<Output = Result<Response, AppErr>>;
+    fn quick_put<U: IntoUrl + Display + Copy, T: Display, Body: Serialize + ?Sized>(
+        self,
+        url: U,
+        body: &Body,
+        access_token: Option<T>,
+    ) -> impl Future<Output = Result<Response, AppErr>>;
     fn quick_get<U: IntoUrl + Display + Copy, T: Display>(
         self,
         url: U,
@@ -109,5 +115,24 @@ impl SendExtended for Client {
             .send()
             .await
             .map_err(|err| AppErr::from_owned(format!("post {0} failed with {err}", url)))
+    }
+
+    async fn quick_put<U: IntoUrl + Display + Copy, T: Display, Body: Serialize + ?Sized>(
+        self,
+        url: U,
+        body: &Body,
+        access_token: Option<T>,
+    ) -> Result<Response, AppErr> {
+        let method = self.put(url);
+        let method_with_auth = match access_token {
+            Some(token) => method.bearer_auth(token),
+            None => method,
+        };
+
+        method_with_auth
+            .json(body)
+            .send()
+            .await
+            .map_err(|err| AppErr::from_owned(format!("put {0} failed with {err}", url)))
     }
 }

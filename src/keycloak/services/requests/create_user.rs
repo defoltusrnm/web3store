@@ -5,6 +5,10 @@ pub struct CreateUserRequest {
     #[serde(skip)]
     pub realm: String,
     pub username: String,
+    #[serde(rename = "firstName")]
+    pub first_name: String,
+    #[serde(rename = "lastName")]
+    pub last_name: String,
     pub enabled: bool,
     pub credentials: [CreateUserCredentialsRequest; 1],
 }
@@ -14,6 +18,8 @@ impl CreateUserRequest {
         CreateUserRequest {
             realm: realm.to_owned(),
             username: username.to_owned(),
+            first_name: username.to_owned(),
+            last_name: username.to_owned(),
             enabled: true,
             credentials: [CreateUserCredentialsRequest::new(password)],
         }

@@ -20,7 +20,7 @@ impl CreateClientRequest {
             realm: realm.to_owned(),
             client_id: client.to_owned(),
             enabled: true,
-            public_client: false,
+            public_client: true,
             secret: secret.to_owned(),
             direct_access_grants_enabled: true,
         }
