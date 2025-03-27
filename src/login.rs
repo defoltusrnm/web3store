@@ -10,11 +10,14 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    keycloak::services::{
-        host_implementation::EnvHostAddressProvider, routes::Routes,
-        routes_implementation::DefaultRoutes,
+    keycloak::{
+        keycloak_ex::KeycloakExtensions,
+        services::{
+            host_implementation::EnvHostAddressProvider, routes::Routes,
+            routes_implementation::DefaultRoutes,
+        },
     },
-    utils::{env::env_var, errors::HttpAppErr},
+    utils::{async_ex::AsyncResult, env::env_var, errors::HttpAppErr, http::ResponseExtended},
 };
 
 pub fn create_login_router() -> Router {
@@ -25,19 +28,13 @@ async fn login(Json(request): Json<LoginRequest>) -> Result<LoginResponse> {
     let host_provider = &EnvHostAddressProvider::new("KEYCLOAK_HOST");
     let routes = &DefaultRoutes::new(host_provider);
 
-    let realm_name = env_var("KEYCLOAK_REALM")
-        .map_err(|_| HttpAppErr::new(StatusCode::INTERNAL_SERVER_ERROR, "Error"))?;
-    let client_name = env_var("KEYCLOAK_CLIENT")
-        .map_err(|_| HttpAppErr::new(StatusCode::INTERNAL_SERVER_ERROR, "Error"))?;
-
     let auth_url = routes
-        .get_auth_route(&realm_name)
-        .await
-        .inspect_err(|err| log::error!("could not get url {err}"))
-        .map_err(|_| HttpAppErr::new(StatusCode::INTERNAL_SERVER_ERROR, ""))?;
+        .get_auth_route(&env_var("KEYCLOAK_REALM")?)
+        .await_log_err()
+        .await?;
 
     let mut params = HashMap::new();
-    params.insert("client_id", client_name);
+    params.insert("client_id", env_var("KEYCLOAK_CLIENT")?);
     params.insert("username", request.login);
     params.insert("password", request.password);
     params.insert("grant_type", "password".to_owned());
@@ -47,28 +44,14 @@ async fn login(Json(request): Json<LoginRequest>) -> Result<LoginResponse> {
         .form(&params)
         .header("Content-Type", "application/x-www-form-urlencoded")
         .send()
-        .await
-        .inspect_err(|err| log::error!("auth err: {err}"))
-        .map_err(|_| HttpAppErr::new(StatusCode::FAILED_DEPENDENCY, "keycloak failed"))?;
+        .await_inspect_err(|err| log::error!("auth err: {err}"))
+        .await_map_err(|_| HttpAppErr::new(StatusCode::FAILED_DEPENDENCY, "keycloak failed"))
+        .await?;
 
-    let status_code = response.status();
-
-    let res = match status_code {
-        StatusCode::OK => response
-            .json::<LoginResponse>()
-            .await
-            .inspect_err(|err| log::error!("error reading response: {err}"))
-            .map_err(|_| HttpAppErr::new(StatusCode::FAILED_DEPENDENCY, "keycloak_error")),
-        _ => {
-            let body = response
-                .text()
-                .await
-                .inspect_err(|err| log::error!("failed to read body: {err}"))
-                .ok()
-                .unwrap_or("".to_owned());
-            Result::<LoginResponse, HttpAppErr>::Err(HttpAppErr::new(status_code, &body))
-        }
-    }?;
+    let res = response
+        .ensure_success_json::<LoginResponse>()
+        .await_log_err()
+        .await?;
 
     Ok(res)
 }

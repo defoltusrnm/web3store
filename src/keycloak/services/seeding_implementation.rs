@@ -1,5 +1,3 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
     keycloak::services::{
         queries::clients::ClientsQuery,
