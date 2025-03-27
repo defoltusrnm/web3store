@@ -41,6 +41,13 @@ impl HttpAppErr {
             reason: app_err.msg,
         }
     }
+
+    pub fn failed_dependency(err: AppErr) -> Self {
+        HttpAppErr {
+            status: StatusCode::FAILED_DEPENDENCY,
+            reason: err.msg,
+        }
+    }
 }
 
 impl IntoResponse for HttpAppErr {
@@ -52,6 +59,18 @@ impl IntoResponse for HttpAppErr {
         };
 
         (self.status, Json(error_msg)).into_response()
+    }
+}
+
+impl IntoResponse for AppErr {
+    fn into_response(self) -> axum::response::Response {
+        let error_msg = HttpErrorMessage {
+            title: StatusCode::INTERNAL_SERVER_ERROR.as_str().to_owned(),
+            status: 500,
+            reason: "internal error".to_owned(),
+        };
+
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(error_msg)).into_response()
     }
 }
 

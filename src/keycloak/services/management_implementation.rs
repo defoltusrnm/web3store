@@ -1,9 +1,11 @@
-use http::StatusCode;
 use reqwest::{Client, Response};
 use tokio::select;
 use tokio_util::sync::CancellationToken;
 
-use crate::utils::{errors::AppErr, http::SendExtended};
+use crate::utils::{
+    errors::AppErr,
+    http::{ResponseExtended, SendExtended},
+};
 
 use super::{
     authorization::AdminAccessTokenProvider,
@@ -56,18 +58,12 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let create_realm_response = select! {
-            resp = Client::new().post_json(&url, request, Some(token.access_token)) => resp,
+            resp = Client::new().quick_post(&url, request, Some(token.access_token)) => resp,
             _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 
-        let status = create_realm_response.status();
-        match status {
-            StatusCode::OK => Ok(()),
-            StatusCode::CREATED => Ok(()),
-            _ => Err(AppErr::from_owned(format!(
-                "create realm status code: {status}"
-            ))),
-        }
+        create_realm_response.ensure_success().await?;
+        Ok(())
     }
 
     async fn create_client(
@@ -83,25 +79,19 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let create_client_response = select! {
-            resp = Client::new().post_json(&url, request, Some(token.access_token)) => resp,
+            resp = Client::new().quick_post(&url, request, Some(token.access_token)) => resp,
             _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 
-        let status = create_client_response.status();
-        match status {
-            StatusCode::OK => Ok(()),
-            StatusCode::CREATED => Ok(()),
-            _ => Err(AppErr::from_owned(format!(
-                "create client status code: {status}"
-            ))),
-        }
+        create_client_response.ensure_success().await?;
+        Ok(())
     }
 
     async fn create_user(
         &self,
         request: &CreateUserRequest,
         cancellation_token: &CancellationToken,
-    ) -> Result<String, AppErr> {
+    ) -> Result<(), AppErr> {
         let url = self.routes.get_create_user_route(&request.realm).await?;
 
         let token = self
@@ -110,25 +100,12 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let create_user_response = select! {
-            resp = Client::new().post_json(&url, request, Some(token.access_token)) => resp,
+            resp = Client::new().quick_post(&url, request, Some(token.access_token)) => resp,
             _ = cancellation_token.cancelled() => Result::<Response, AppErr>::Err(AppErr::from("create realm request cancelled"))
         }?;
 
-        let status = create_user_response.status();
-        let body = create_user_response
-            .text()
-            .await
-            .inspect_err(|err| log::warn!("cannot read body on create user: {err}"))
-            .ok()
-            .unwrap_or("".to_owned());
-
-        match status {
-            StatusCode::OK => Ok(body),
-            StatusCode::CREATED => Ok(body),
-            _ => Err(AppErr::from_owned(format!(
-                "create user status code: {status} with body {body}"
-            ))),
-        }
+        create_user_response.ensure_success().await?;
+        Ok(())
     }
 
     async fn query_users(
@@ -147,29 +124,12 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let response = select! {
-            resp = Client::new().get(url).bearer_auth(token.access_token).send() => {
-                resp.map_err(|err| AppErr::from_owned(format!("querying users err: {err}")))
-            }
-            _ = cancellation_token.cancelled() => Result::<Response, AppErr>::Err(AppErr::from("user querying cancelled"))
+            resp = Client::new().quick_get(&url, Some(token.access_token)) => resp,
+            _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 
-        let status = response.status();
-
-        match status {
-            StatusCode::OK => response
-                .json::<Vec<UserResponse>>()
-                .await
-                .map_err(|err| AppErr::from_owned(format!("cannot read users json: {err}"))),
-            _ => {
-                let body = response
-                    .text()
-                    .await
-                    .map_err(|err| AppErr::from_owned(format!("[{status}]: {err}")))?;
-                Result::<Vec<UserResponse>, AppErr>::Err(AppErr::from_owned(format!(
-                    "[status]: {body}"
-                )))
-            }
-        }
+        let users = response.ensure_success_json::<Vec<UserResponse>>().await?;
+        Ok(users)
     }
 
     async fn query_clients(
@@ -188,29 +148,14 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let response = select! {
-            resp = Client::new().get(url).bearer_auth(token.access_token).send() => {
-                resp.map_err(|err| AppErr::from_owned(format!("querying clients err: {err}")))
-            }
-            _ = cancellation_token.cancelled() => Result::<Response, AppErr>::Err(AppErr::from("client querying cancelled"))
+            resp = Client::new().quick_get(&url, Some(token.access_token)) => resp,
+            _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 
-        let status = response.status();
-
-        match status {
-            StatusCode::OK => response
-                .json::<Vec<ClientResponse>>()
-                .await
-                .map_err(|err| AppErr::from_owned(format!("cannot read client json: {err}"))),
-            _ => {
-                let body = response
-                    .text()
-                    .await
-                    .map_err(|err| AppErr::from_owned(format!("[{status}]: {err}")))?;
-                Result::<Vec<ClientResponse>, AppErr>::Err(AppErr::from_owned(format!(
-                    "[status]: {body}"
-                )))
-            }
-        }
+        let clients = response
+            .ensure_success_json::<Vec<ClientResponse>>()
+            .await?;
+        Ok(clients)
     }
 
     async fn create_role(
@@ -229,25 +174,12 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let create_role_response = select! {
-            resp = Client::new().post_json(&url, request, Some(token.access_token)) => resp,
+            resp = Client::new().quick_post(&url, request, Some(token.access_token)) => resp,
             _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 
-        let status = create_role_response.status();
-        let body = create_role_response
-            .text()
-            .await
-            .inspect_err(|err| log::warn!("cannot read body on create role: {err}"))
-            .ok()
-            .unwrap_or("".to_owned());
-
-        match status {
-            StatusCode::OK => Ok(()),
-            StatusCode::CREATED => Ok(()),
-            _ => Err(AppErr::from_owned(format!(
-                "create role status code: {status} with body {body}"
-            ))),
-        }
+        create_role_response.ensure_success().await?;
+        Ok(())
     }
 
     async fn query_role(
@@ -266,27 +198,12 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let response = select! {
-            resp = Client::new().get(url).bearer_auth(token.access_token).send() => {
-                resp.map_err(|err| AppErr::from_owned(format!("querying role err: {err}")))
-            }
-            _ = cancellation_token.cancelled() => Result::<Response, AppErr>::Err(AppErr::from("role querying cancelled"))
+            resp = Client::new().quick_get(&url, Some(token.access_token)) => resp,
+            _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 
-        let status = response.status();
-
-        match status {
-            StatusCode::OK => response
-                .json::<RoleResponse>()
-                .await
-                .map_err(|err| AppErr::from_owned(format!("cannot read role json: {err}"))),
-            _ => {
-                let body = response
-                    .text()
-                    .await
-                    .map_err(|err| AppErr::from_owned(format!("[{status}]: {err}")))?;
-                Result::<RoleResponse, AppErr>::Err(AppErr::from_owned(format!("[status]: {body}")))
-            }
-        }
+        let role = response.ensure_success_json::<RoleResponse>().await?;
+        Ok(role)
     }
 
     async fn assign_roles(
@@ -305,26 +222,12 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let response = select! {
-            resp = Client::new().post_json(&url, &request.assign_roles, Some(token.access_token)) =>  resp,
+            resp = Client::new().quick_post(&url, &request.assign_roles, Some(token.access_token)) =>  resp,
             _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 
-        let status = response.status();
-        let body = response
-            .text()
-            .await
-            .inspect_err(|err| log::warn!("cannot read body on roles assignment: {err}"))
-            .ok()
-            .unwrap_or("".to_owned());
-
-        match status {
-            StatusCode::OK => Ok(()),
-            StatusCode::CREATED => Ok(()),
-            StatusCode::NO_CONTENT => Ok(()),
-            _ => Err(AppErr::from_owned(format!(
-                "roles assignment status code: {status} with body {body}"
-            ))),
-        }
+        response.ensure_success().await?;
+        Ok(())
     }
 
     async fn update_users_email(
@@ -343,25 +246,11 @@ impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> Keycloa
             .await?;
 
         let response = select! {
-            resp = Client::new().post_json(&url, &request, Some(token.access_token)) => resp,
+            resp = Client::new().quick_post(&url, &request, Some(token.access_token)) => resp,
             _ = cancellation_token.cancelled() => AppErr::cancelled()
         }?;
 
-        let status = response.status();
-        let body = response
-            .text()
-            .await
-            .inspect_err(|err| log::warn!("cannot read body on update user's email: {err}"))
-            .ok()
-            .unwrap_or("".to_owned());
-
-        match status {
-            StatusCode::OK => Ok(()),
-            StatusCode::CREATED => Ok(()),
-            StatusCode::NO_CONTENT => Ok(()),
-            _ => Err(AppErr::from_owned(format!(
-                "update user's email status code: {status} with body {body}"
-            ))),
-        }
+        response.ensure_success().await?;
+        Ok(())
     }
 }

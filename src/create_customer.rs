@@ -33,14 +33,9 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
     let auth_provider = &DefaultAdminTokenProvider::new(routes, credentials_provider);
     let manager = &DefaultKeycloakManagement::new(auth_provider, routes);
 
-    let realm_name = env_var("KEYCLOAK_REALM")
-        .map_err(|_| HttpAppErr::new(StatusCode::INTERNAL_SERVER_ERROR, "Error"))?;
-
-    let client_name = env_var("KEYCLOAK_CLIENT")
-        .map_err(|_| HttpAppErr::new(StatusCode::INTERNAL_SERVER_ERROR, "Error"))?;
-
-    let role_name = env_var("KEYCLOAK_CUSTOMER_ROLE")
-        .map_err(|_| HttpAppErr::new(StatusCode::INTERNAL_SERVER_ERROR, "Error"))?;
+    let realm_name = env_var("KEYCLOAK_REALM")?;
+    let client_name = env_var("KEYCLOAK_CLIENT")?;
+    let role_name = env_var("KEYCLOAK_CUSTOMER_ROLE")?;
 
     let clients = manager
         .query_clients(
@@ -49,7 +44,7 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
         )
         .await
         .inspect_err(|err| log::error!("failed to retrieve client: {err}"))
-        .map_err(|_| HttpAppErr::new(StatusCode::FAILED_DEPENDENCY, "keycloak error"))?;
+        .map_err(HttpAppErr::failed_dependency)?;
 
     let client = clients
         .get(0)
@@ -66,7 +61,7 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
         )
         .await
         .inspect_err(|err| log::error!("failed to retrieve role: {err}"))
-        .map_err(|_| HttpAppErr::new(StatusCode::FAILED_DEPENDENCY, "keycloak error"))?;
+        .map_err(HttpAppErr::failed_dependency)?;
 
     manager
         .create_user(
@@ -75,7 +70,7 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
         )
         .await
         .inspect_err(|err| log::error!("failed to create user: {err}"))
-        .map_err(|_| HttpAppErr::new(StatusCode::FAILED_DEPENDENCY, "keycloak error"))?;
+        .map_err(HttpAppErr::failed_dependency)?;
 
     let users = manager
         .query_users(
@@ -84,7 +79,7 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
         )
         .await
         .inspect_err(|err| log::error!("failed to retrieve user: {err}"))
-        .map_err(|_| HttpAppErr::new(StatusCode::FAILED_DEPENDENCY, "keycloak error"))?;
+        .map_err(HttpAppErr::failed_dependency)?;
 
     let user = users.get(0).map(Result::Ok).unwrap_or(Err(HttpAppErr::new(
         StatusCode::INTERNAL_SERVER_ERROR,
@@ -98,7 +93,7 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
         )
         .await
         .inspect_err(|err| log::error!("failed to update user email: {err}"))
-        .map_err(|_| HttpAppErr::new(StatusCode::FAILED_DEPENDENCY, "keycloak error"))?;
+        .map_err(HttpAppErr::failed_dependency)?;
 
     manager
         .assign_roles(
@@ -112,7 +107,7 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
         )
         .await
         .inspect_err(|err| log::error!("failed to update user email: {err}"))
-        .map_err(|_| HttpAppErr::new(StatusCode::FAILED_DEPENDENCY, "keycloak error"))?;
+        .map_err(HttpAppErr::failed_dependency)?;
 
     Ok(StatusCode::CREATED)
 }

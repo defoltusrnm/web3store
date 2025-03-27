@@ -5,11 +5,13 @@ use reqwest::{Client, Response};
 use tokio::select;
 use tokio_util::sync::CancellationToken;
 
-use crate::utils::errors::AppErr;
+use crate::utils::{errors::AppErr, http::ResponseExtended};
 
 use super::{
-    authorization::AdminAccessTokenProvider, credentials::AdminCredentialProvider,
-    responses::access_token::AccessTokenResponse, routes::AdminRoutes,
+    authorization::AdminAccessTokenProvider,
+    credentials::AdminCredentialProvider,
+    responses::{self, access_token::AccessTokenResponse},
+    routes::AdminRoutes,
 };
 
 pub struct DefaultAdminTokenProvider<'a, TRoutes, TAdminCredentialProvider>
@@ -64,12 +66,9 @@ where
 
         }?;
 
-        match auth_response.status() {
-            StatusCode::OK => select! {
-                body = auth_response.json::<AccessTokenResponse>() => body.map_err(|err| AppErr::from_owned(format!("reading body err: {err}"))) ,
-                _ = cancellation_token.cancelled() => Result::<AccessTokenResponse, AppErr>::Err(AppErr::from("body read cancelled"))
-            },
-            _ => Err(AppErr::from("da fuq")),
-        }
+        let token = auth_response
+            .ensure_success_json::<AccessTokenResponse>()
+            .await?;
+        Ok(token)
     }
 }

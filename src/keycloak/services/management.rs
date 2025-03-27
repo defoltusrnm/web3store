@@ -29,7 +29,7 @@ pub trait KeycloakManagement {
         &self,
         request: &CreateUserRequest,
         cancellation_token: &CancellationToken,
-    ) -> impl Future<Output = Result<String, AppErr>>;
+    ) -> impl Future<Output = Result<(), AppErr>>;
 
     fn query_users(
         &self,
