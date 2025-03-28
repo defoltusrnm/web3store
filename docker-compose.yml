@@ -55,6 +55,21 @@ services:
       - KAFKA_CUSTOMER_TOPIC=customer-created
       - KAFKA_VENDOR_TOPIC=vendor-created
 
+  customer_service:
+    build:
+      context: .
+      dockerfile: customers/Dockerfile
+    ports:
+      - 4311:4311
+    networks:
+      - solution_net
+    depends_on:
+      - broker
+    environment:
+      - SERVICE_HOST=0.0.0.0:4310
+      - KAFKA_HOST=broker:9092
+      - KAFKA_CUSTOMER_TOPIC=customer-created
+
 networks:
   solution_net:
     driver: bridge

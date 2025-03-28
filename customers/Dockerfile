@@ -1,15 +1,15 @@
 FROM rust:latest
-EXPOSE 4310
+EXPOSE 4311
 
 RUN apt-get update && apt-get install -y cmake
 
-COPY ./auth/Cargo.toml ./auth/
-COPY ./auth/src ./auth/src
+COPY ./customers/Cargo.toml ./customers/
+COPY ./customers/src ./customers/src
 
 COPY ./utils/Cargo.toml ./utils/
 COPY ./utils/src ./utils/src
 
-WORKDIR /auth
+WORKDIR /customers
 RUN cargo build --release
 
-CMD ["./target/release/auth"]
+CMD ["./target/release/customers"]

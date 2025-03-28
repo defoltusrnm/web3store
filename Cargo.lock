@@ -242,6 +242,7 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tower",
+ "utils",
 ]
 
 [[package]]
