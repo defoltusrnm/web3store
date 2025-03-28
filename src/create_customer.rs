@@ -1,8 +1,9 @@
 use axum::{Json, Router, response::Result, routing::post};
 use http::StatusCode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
+    kafka::kafka_producer,
     keycloak::{
         keycloak_ex::KeycloakExtensions,
         services::{
@@ -20,7 +21,10 @@ use crate::{
             routes_implementation::DefaultAdminRoutes,
         },
     },
-    utils::{env::env_var, errors::HttpAppErr},
+    utils::{
+        env::env_var,
+        errors::{AppErr, HttpAppErr},
+    },
 };
 
 pub fn create_customer_router() -> Router {
@@ -95,6 +99,11 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
         .await_err_as_failed_dependency()
         .await?;
 
+    match produce_customer_created(request.email).await {
+        Ok(()) => log::info!("event created"),
+        Err(err) => log::error!("failed to send event: {err}"),
+    };
+
     Ok(StatusCode::CREATED)
 }
 
@@ -102,4 +111,19 @@ async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<S
 struct CreateCustomerRequest {
     pub email: String,
     pub password: String,
+}
+
+#[derive(Serialize)]
+struct CustomerCreatedEvent {
+    pub email: String,
+}
+
+async fn produce_customer_created(email: String) -> Result<(), AppErr> {
+    let kafka_host = env_var("KAFKA_HOST")?;
+    let kafka_topic = env_var("KAFKA_CUSTOMER_TOPIC")?;
+
+    kafka_producer::produce_event(&kafka_host, &kafka_topic, CustomerCreatedEvent { email })
+        .await?;
+
+    Ok(())
 }
