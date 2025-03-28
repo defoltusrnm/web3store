@@ -1,4 +1,4 @@
-use crate::utils::errors::AppErr;
+use utils::errors::AppErr;
 
 pub struct KeycloakSeedingArguments<'a> {
     pub realm_name: &'a str,

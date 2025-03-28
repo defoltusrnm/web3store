@@ -1,5 +1,5 @@
-use crate::utils::errors::{AppErr, HttpAppErr};
 use futures::TryFutureExt;
+use utils::errors::{AppErr, HttpAppErr};
 
 pub trait KeycloakExtensions<T, Ok>
 where

@@ -9,16 +9,14 @@ use futures::TryFutureExt;
 use http::StatusCode;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use utils::{env::env_var, errors::HttpAppErr, http::ResponseExtended};
 
-use crate::{
-    keycloak::{
-        keycloak_ex::KeycloakExtensions,
-        services::{
-            host_implementation::EnvHostAddressProvider, routes::Routes,
-            routes_implementation::DefaultRoutes,
-        },
+use crate::keycloak::{
+    keycloak_ex::KeycloakExtensions,
+    services::{
+        host_implementation::EnvHostAddressProvider, routes::Routes,
+        routes_implementation::DefaultRoutes,
     },
-    utils::{env::env_var, errors::HttpAppErr, http::ResponseExtended},
 };
 
 pub fn create_login_router() -> Router {

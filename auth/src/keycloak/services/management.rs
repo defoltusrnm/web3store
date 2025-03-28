@@ -1,6 +1,5 @@
 use tokio_util::sync::CancellationToken;
-
-use crate::utils::errors::AppErr;
+use utils::errors::AppErr;
 
 use super::{
     queries::{clients::ClientsQuery, role::RoleQuery, users::UsersQuery},

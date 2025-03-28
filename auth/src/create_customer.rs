@@ -1,6 +1,10 @@
 use axum::{Json, Router, response::Result, routing::post};
 use http::StatusCode;
 use serde::{Deserialize, Serialize};
+use utils::{
+    env::env_var,
+    errors::{AppErr, HttpAppErr},
+};
 
 use crate::{
     kafka::kafka_producer,
@@ -20,10 +24,6 @@ use crate::{
             },
             routes_implementation::DefaultAdminRoutes,
         },
-    },
-    utils::{
-        env::env_var,
-        errors::{AppErr, HttpAppErr},
     },
 };
 

@@ -2,7 +2,6 @@ pub mod create_customer;
 pub mod keycloak;
 pub mod login;
 pub mod refresh_token;
-pub mod utils;
 pub mod kafka;
 
 extern crate axum;

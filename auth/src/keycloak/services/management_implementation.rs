@@ -1,8 +1,7 @@
 use reqwest::{Client, Response};
 use tokio::select;
 use tokio_util::sync::CancellationToken;
-
-use crate::utils::{
+use utils::{
     errors::AppErr,
     http::{ResponseExtended, SendExtended},
 };

@@ -6,8 +6,7 @@ use rdkafka::{
     producer::{FutureProducer, FutureRecord},
 };
 use serde::Serialize;
-
-use crate::utils::errors::AppErr;
+use utils::errors::AppErr;
 
 pub async fn produce_event<'a, T: Serialize>(
     host: &str,

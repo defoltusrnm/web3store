@@ -1,1 +1,0 @@
-cargo:rustc-env=MIME_TYPES_GENERATED_PATH=C:\more-shiet\rust_internship_cheatsample\target\debug\build\mime_guess-25957826cd6fd13f\out\mime_types_generated.rs

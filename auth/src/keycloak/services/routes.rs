@@ -1,4 +1,4 @@
-use crate::utils::errors::AppErr;
+use utils::errors::AppErr;
 
 pub trait AdminRoutes {
     fn get_access_token_route(&self) -> impl Future<Output = Result<String, AppErr>>;

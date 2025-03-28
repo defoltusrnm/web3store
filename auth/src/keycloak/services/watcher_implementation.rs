@@ -2,8 +2,7 @@ use std::time::Duration;
 
 use tokio::{select, time::sleep};
 use tokio_util::sync::CancellationToken;
-
-use crate::utils::errors::AppErr;
+use utils::errors::AppErr;
 
 use super::{authorization::AdminAccessTokenProvider, watcher::KeycloakWatcher};
 

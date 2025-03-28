@@ -1,12 +1,11 @@
-use crate::{
-    keycloak::services::{
-        queries::clients::ClientsQuery,
-        requests::{
-            create_client::CreateClientRequest, create_realm::CreateRealmRequest,
-            create_role::CreateRoleRequest,
-        },
+use utils::errors::AppErr;
+
+use crate::keycloak::services::{
+    queries::clients::ClientsQuery,
+    requests::{
+        create_client::CreateClientRequest, create_realm::CreateRealmRequest,
+        create_role::CreateRoleRequest,
     },
-    utils::errors::AppErr,
 };
 
 use super::{

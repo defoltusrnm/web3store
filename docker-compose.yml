@@ -32,8 +32,8 @@ services:
 
   auth_api:
     build:
-      context: ./auth
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: auth/Dockerfile
     ports:
       - 4310:4310
     networks:

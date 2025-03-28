@@ -1,7 +1,0 @@
-C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/build/CMakeFiles/INSTALL.dir
-C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/build/CMakeFiles/ALL_BUILD.dir
-C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/build/CMakeFiles/ZERO_CHECK.dir
-C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/build/src/CMakeFiles/rdkafka.dir
-C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/build/src/CMakeFiles/INSTALL.dir
-C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/build/src-cpp/CMakeFiles/rdkafka++.dir
-C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/build/src-cpp/CMakeFiles/INSTALL.dir

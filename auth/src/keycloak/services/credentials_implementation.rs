@@ -1,6 +1,6 @@
 use std::env;
 
-use crate::utils::errors::AppErr;
+use utils::errors::AppErr;
 
 use super::credentials::AdminCredentialProvider;
 

@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use reqwest::{Client, Response};
 use tokio::select;
 use tokio_util::sync::CancellationToken;
-
-use crate::utils::{errors::AppErr, http::ResponseExtended};
+use utils::{errors::AppErr, http::ResponseExtended};
 
 use super::{
     authorization::AdminAccessTokenProvider, credentials::AdminCredentialProvider,
