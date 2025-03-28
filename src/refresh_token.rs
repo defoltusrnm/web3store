@@ -5,6 +5,7 @@ use axum::{
     response::{self, IntoResponse},
     routing::post,
 };
+use futures::TryFutureExt;
 use http::StatusCode;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -17,7 +18,7 @@ use crate::{
             routes_implementation::DefaultRoutes,
         },
     },
-    utils::{async_ex::AsyncResult, env::env_var, errors::HttpAppErr, http::ResponseExtended},
+    utils::{env::env_var, errors::HttpAppErr, http::ResponseExtended},
 };
 
 pub fn create_refresh_token_router() -> Router {
@@ -30,7 +31,7 @@ async fn refresh_token(Json(request): Json<LoginRequest>) -> response::Result<Lo
 
     let auth_url = routes
         .get_auth_route(&env_var("KEYCLOAK_REALM")?)
-        .await_log_err()
+        .log_err()
         .await?;
 
     let mut params = HashMap::new();
@@ -43,13 +44,13 @@ async fn refresh_token(Json(request): Json<LoginRequest>) -> response::Result<Lo
         .form(&params)
         .header("Content-Type", "application/x-www-form-urlencoded")
         .send()
-        .await_inspect_err(|err| log::error!("auth err: {err}"))
-        .await_map_err(|_| HttpAppErr::new(StatusCode::FAILED_DEPENDENCY, "keycloak failed"))
+        .inspect_err(|err| log::error!("auth err: {err}"))
+        .map_err(|_| HttpAppErr::new(StatusCode::FAILED_DEPENDENCY, "keycloak failed"))
         .await?;
 
     let res = response
         .ensure_success_json::<LoginResponse>()
-        .await_log_err()
+        .log_err()
         .await?;
 
     Ok(res)
