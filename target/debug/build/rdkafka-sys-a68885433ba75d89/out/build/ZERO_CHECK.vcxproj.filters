@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\more-shiet\rust_internship_cheatsample\target\debug\build\rdkafka-sys-a68885433ba75d89\out\build\CMakeFiles\9cba75b850adf32bda68c3aaa7f908c2\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{08BEAA59-F750-3B3F-9311-02140CA4F4DB}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

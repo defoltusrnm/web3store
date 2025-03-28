@@ -1,0 +1,13 @@
+C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/lib/cmake/RdKafka/RdKafkaConfig.cmake
+C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/lib/cmake/RdKafka/RdKafkaConfigVersion.cmake
+C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/lib/cmake/RdKafka/FindLZ4.cmake
+C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/lib/cmake/RdKafka/RdKafkaTargets.cmake
+C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/lib/cmake/RdKafka/RdKafkaTargets-debug.cmake
+C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/share/licenses/librdkafka/LICENSES.txt
+C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/lib/pkgconfig/rdkafka-static.pc
+C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/lib/rdkafka.lib
+C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/include/librdkafka/rdkafka.h
+C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/include/librdkafka/rdkafka_mock.h
+C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/lib/pkgconfig/rdkafka++-static.pc
+C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/lib/rdkafka++.lib
+C:/more-shiet/rust_internship_cheatsample/target/debug/build/rdkafka-sys-a68885433ba75d89/out/include/librdkafka/rdkafkacpp.h

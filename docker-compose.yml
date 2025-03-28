@@ -5,7 +5,7 @@ services:
     ports:
       - 8080:8080
     networks:
-      - auth_net
+      - solution_net
     environment:
       - KC_BOOTSTRAP_ADMIN_USERNAME=admin
       - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
@@ -15,7 +15,7 @@ services:
     ports:
       - 9092:9092
     networks:
-      - auth_net
+      - solution_net
     environment:
       - KAFKA_NODE_ID=1
       - KAFKA_PROCESS_ROLES=broker,controller
@@ -32,12 +32,12 @@ services:
 
   auth_api:
     build:
-      context: .
+      context: ./auth
       dockerfile: Dockerfile
     ports:
       - 4310:4310
     networks:
-      - auth_net
+      - solution_net
     depends_on:
       - keycloak
       - broker
@@ -56,5 +56,5 @@ services:
       - KAFKA_VENDOR_TOPIC=vendor-created
 
 networks:
-  auth_net:
+  solution_net:
     driver: bridge
