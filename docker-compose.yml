@@ -59,7 +59,7 @@ services:
       - KAFKA_VENDOR_TOPIC=vendor-created
 
   customers_pg:
-    container_name: customerspg
+    container_name: customers_pg
     build:
       context: .
       dockerfile: customers/postgres.Dockerfile
