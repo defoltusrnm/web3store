@@ -1,14 +1,27 @@
-use futures::StreamExt;
+pub mod entity;
+pub mod migrations;
+
+use futures::{StreamExt, TryFutureExt};
 use rdkafka::{
     ClientConfig, Message,
     consumer::{Consumer, StreamConsumer},
 };
+use sea_orm::Database;
+use sea_orm_migration::MigratorTrait;
 use utils::{dotenv::configure_dotenv, env::env_var, errors::AppErr, logging::configure_logs};
 
 #[tokio::main]
 async fn main() -> Result<(), AppErr> {
     configure_dotenv();
     _ = configure_logs(log::LevelFilter::Info)?;
+
+    let db = Database::connect(env_var("POSTGRES_HOST")?)
+        .map_err(|err| AppErr::from_owned(format!("failed to connect to db: {err}")))
+        .await?;
+
+    migrations::migrator::Migrator::up(&db, None)
+        .map_err(|err| AppErr::from_owned(format!("failed to migrate database: {err}")))
+        .await?;
 
     consume_topic().await?;
 

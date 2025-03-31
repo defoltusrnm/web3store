@@ -55,21 +55,40 @@ services:
       - KAFKA_CUSTOMER_TOPIC=customer-created
       - KAFKA_VENDOR_TOPIC=vendor-created
 
+  customers_pg:
+    build:
+      context: .
+      dockerfile: customers/postgres.Dockerfile
+    ports:
+      - 7432:5432
+    networks:
+      - solution_net
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
   customer_service:
     build:
       context: .
       dockerfile: customers/Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
     ports:
       - 4311:4311
     networks:
       - solution_net
     depends_on:
       - broker
+      - customers_pg
     environment:
       - SERVICE_HOST=0.0.0.0:4310
       - KAFKA_HOST=broker:9092
       - KAFKA_CUSTOMER_TOPIC=customer-created
-
+      - POSTGRES_HOST=postgres://postgres:postgres@customers_pg:7432/customers_db
 networks:
   solution_net:
     driver: bridge
