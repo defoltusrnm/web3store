@@ -19,11 +19,10 @@ async fn main() -> Result<(), AppErr> {
 
     let mut opt = ConnectOptions::new(env_var("DB_HOST")?);
     opt.max_connections(100)
-        .min_connections(5)
-        .max_connections(100)
+        .min_connections(1)
         .connect_timeout(Duration::from_secs(8))
         .acquire_timeout(Duration::from_secs(8))
-        .test_before_acquire(false);
+        .connect_lazy(true);
 
     let db = Database::connect(opt)
         .map_err(|err| AppErr::from_owned(format!("failed to connect: {err}")))

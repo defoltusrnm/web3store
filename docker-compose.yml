@@ -89,7 +89,7 @@ services:
       - KAFKA_HOST=broker:9092
       - KAFKA_CUSTOMER_TOPIC=customer-created
       - DB_HOST=postgres://usr:pwd@customers_pg:7432/customers_db
-      
+
 networks:
   solution_net:
     driver: bridge
