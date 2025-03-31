@@ -1,14 +1,16 @@
 pub mod create_customer;
+pub mod create_vendor;
+pub mod kafka;
 pub mod keycloak;
 pub mod login;
 pub mod refresh_token;
-pub mod kafka;
 
 extern crate axum;
 use std::time::Duration;
 
 use axum::{Router, response::Result};
 use create_customer::create_customer_router;
+use create_vendor::create_vendor_router;
 use futures::TryFutureExt;
 use keycloak::services::{
     authorization_implementation::DefaultAdminTokenProvider,
@@ -64,6 +66,7 @@ async fn main() -> Result<(), AppErr> {
 
     let app = Router::new()
         .merge(create_customer_router())
+        .merge(create_vendor_router())
         .merge(create_login_router())
         .merge(create_refresh_token_router());
 

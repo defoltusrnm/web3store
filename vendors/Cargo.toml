@@ -1,0 +1,27 @@
+[package]
+name = "vendors"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8.1"
+derive_more = { version = "2.0.1", features = ["display"] }
+dotenv = "0.15.0"
+futures = "0.3.31"
+http = "1.3.1"
+hyper = { version = "1.6.0", features = ["full"] }
+log = "0.4.27"
+log4rs = "1.3.0"
+rdkafka = { version = "0.37.0", features = ["tokio", "cmake-build"] }
+reqwest = { version = "0.12.15", features = ["json", "multipart"] }
+serde = "1.0.219"
+serde_json = "1.0.140"
+tokio = { version = "1.44.1", features = ["full"] }
+tokio-util = "0.7.14"
+tower = "0.5.2"
+sea-orm = { version = "1.1.8", features = [
+    "sqlx-postgres",
+    "runtime-tokio-native-tls",
+] }
+sea-orm-migration = "1.1.8"
+utils = { path = "../utils" }

@@ -94,6 +94,43 @@ services:
       - KAFKA_HOST=broker:9092
       - KAFKA_CUSTOMER_TOPIC=customer-created
       - DB_HOST=postgres://usr:pwd@customers_pg:5432/customers_db
+      
+  vendors_pg:
+    container_name: vendors_pg
+    build:
+      context: .
+      dockerfile: vendors/postgres.Dockerfile
+    ports:
+      - 8432:5432
+    networks:
+      - solution_net
+    environment:
+      - POSTGRES_USER=usr
+      - POSTGRES_PASSWORD=pwd
+
+  vendors_service:
+    container_name: vendors_service
+    build:
+      context: .
+      dockerfile: vendors/Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    ports:
+      - 4312:4312
+    networks:
+      - solution_net
+    depends_on:
+      - broker
+      - vendors_pg
+    environment:
+      - SERVICE_HOST=0.0.0.0:4310
+      - KAFKA_HOST=broker:9092
+      - KAFKA_VENDOR_TOPIC=vendor-created
+      - DB_HOST=postgres://usr:pwd@vendors_pg:5432/vendors_db
 
 networks:
   solution_net:
