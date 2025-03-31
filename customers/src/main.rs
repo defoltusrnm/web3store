@@ -8,14 +8,21 @@ use rdkafka::{
     ClientConfig, Message,
     consumer::{Consumer, StreamConsumer},
 };
-use sea_orm::{ConnectOptions, Database};
+use sea_orm::{ConnectOptions, Database, sqlx::postgres::PgPoolOptions};
 use sea_orm_migration::MigratorTrait;
 use utils::{dotenv::configure_dotenv, env::env_var, errors::AppErr, logging::configure_logs};
 
 #[tokio::main]
 async fn main() -> Result<(), AppErr> {
     configure_dotenv();
-    _ = configure_logs(log::LevelFilter::Trace)?;
+    _ = configure_logs(log::LevelFilter::Debug)?;
+
+    let url = env_var("DB_HOST")?;
+    let _pg_pool = PgPoolOptions::new()
+        .max_connections(100)
+        .connect(&url)
+        .map_err(|err| AppErr::from_owned(format!("failed at connecting from pool: {err}")))
+        .await?;
 
     let mut opt = ConnectOptions::new(env_var("DB_HOST")?);
     opt.max_connections(100)
