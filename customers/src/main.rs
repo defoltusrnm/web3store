@@ -1,22 +1,32 @@
 pub mod entity;
 pub mod migrations;
 
+use std::time::Duration;
+
 use futures::{StreamExt, TryFutureExt};
 use rdkafka::{
     ClientConfig, Message,
     consumer::{Consumer, StreamConsumer},
 };
-use sea_orm::Database;
+use sea_orm::{ConnectOptions, Database};
 use sea_orm_migration::MigratorTrait;
 use utils::{dotenv::configure_dotenv, env::env_var, errors::AppErr, logging::configure_logs};
 
 #[tokio::main]
 async fn main() -> Result<(), AppErr> {
     configure_dotenv();
-    _ = configure_logs(log::LevelFilter::Info)?;
+    _ = configure_logs(log::LevelFilter::Trace)?;
 
-    let db = Database::connect(env_var("POSTGRES_HOST")?)
-        .map_err(|err| AppErr::from_owned(format!("failed to connect to db: {err}")))
+    let mut opt = ConnectOptions::new(env_var("DB_HOST")?);
+    opt.max_connections(100)
+        .min_connections(5)
+        .max_connections(100)
+        .connect_timeout(Duration::from_secs(8))
+        .acquire_timeout(Duration::from_secs(8))
+        .test_before_acquire(false);
+
+    let db = Database::connect(opt)
+        .map_err(|err| AppErr::from_owned(format!("failed to connect: {err}")))
         .await?;
 
     migrations::migrator::Migrator::up(&db, None)
