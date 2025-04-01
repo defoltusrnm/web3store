@@ -1,4 +1,5 @@
 services:
+
   keycloak:
     container_name: keycloak
     image: quay.io/keycloak/keycloak:latest
@@ -37,8 +38,6 @@ services:
     build:
       context: .
       dockerfile: auth/Dockerfile
-    ports:
-      - 4310:4310
     networks:
       - solution_net
     depends_on:
@@ -53,7 +52,7 @@ services:
       - KEYCLOAK_REALM=demo_realm
       - KEYCLOAK_CUSTOMER_ROLE=customer
       - KEYCLOAK_VENDOR_ROLE=vendor
-      - SERVICE_HOST=0.0.0.0:4310
+      - SERVICE_HOST=0.0.0.0:80
       - KAFKA_HOST=broker:9092
       - KAFKA_CUSTOMER_TOPIC=customer-created
       - KAFKA_VENDOR_TOPIC=vendor-created
@@ -71,8 +70,8 @@ services:
       - POSTGRES_USER=usr
       - POSTGRES_PASSWORD=pwd
 
-  customer_service:
-    container_name: customer_service
+  customers_service:
+    container_name: customers_service
     build:
       context: .
       dockerfile: customers/Dockerfile
@@ -82,15 +81,13 @@ services:
         delay: 5s
         max_attempts: 3
         window: 120s
-    ports:
-      - 4311:4311
     networks:
       - solution_net
     depends_on:
       - broker
       - customers_pg
     environment:
-      - SERVICE_HOST=0.0.0.0:4310
+      - SERVICE_HOST=0.0.0.0:80
       - KAFKA_HOST=broker:9092
       - KAFKA_CUSTOMER_TOPIC=customer-created
       - DB_HOST=postgres://usr:pwd@customers_pg:5432/customers_db
@@ -119,18 +116,31 @@ services:
         delay: 5s
         max_attempts: 3
         window: 120s
-    ports:
-      - 4312:4312
     networks:
       - solution_net
     depends_on:
       - broker
       - vendors_pg
     environment:
-      - SERVICE_HOST=0.0.0.0:4310
+      - SERVICE_HOST=0.0.0.0:80
       - KAFKA_HOST=broker:9092
       - KAFKA_VENDOR_TOPIC=vendor-created
       - DB_HOST=postgres://usr:pwd@vendors_pg:5432/vendors_db
+
+  proxy:
+    build:
+      context: .
+      dockerfile: proxy/Dockerfile
+    container_name: proxy
+    ports:
+      - 5001:80
+    networks:
+      - solution_net
+    depends_on:
+      - auth_service
+      - customers_service
+      - vendors_service
+    restart: always
 
 networks:
   solution_net:

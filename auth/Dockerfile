@@ -1,5 +1,5 @@
 FROM rust:latest
-EXPOSE 4310
+EXPOSE 80
 
 RUN apt-get update && apt-get install -y cmake
 

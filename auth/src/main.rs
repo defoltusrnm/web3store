@@ -74,6 +74,8 @@ async fn main() -> Result<(), AppErr> {
         .map_err(|err| AppErr::from_owned(format!("failed to bind: {err}")))
         .await?;
 
+    log::info!("app started at: {0}", env_var("SERVICE_HOST")?);
+
     axum::serve(listener, app)
         .await
         .map_err(|err| AppErr::from_owned(format!("server failed {err}")))?;
