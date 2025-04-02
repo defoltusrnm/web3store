@@ -48,4 +48,5 @@ RUN cargo build -r --verbose
 FROM alpine:latest AS runtime
 WORKDIR /app
 COPY --from=builder /app/target/release/auth /app/auth
-CMD "/app/auth"
+EXPOSE 80
+ENTRYPOINT [ "/app/auth" ]

@@ -38,6 +38,8 @@ services:
     build:
       context: .
       dockerfile: auth/Dockerfile
+    ports:
+      - 5002:80
     networks:
       - solution_net
     depends_on:
