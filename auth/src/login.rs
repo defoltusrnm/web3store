@@ -47,10 +47,7 @@ async fn login(Json(request): Json<LoginRequest>) -> Result<LoginResponse> {
         .map_err(|_| HttpAppErr::new(StatusCode::FAILED_DEPENDENCY, "keycloak failed"))
         .await?;
 
-    let res = response
-        .ensure_success_json::<LoginResponse>()
-        .log_err()
-        .await?;
+    let res = response.ensure_success_json::<LoginResponse>().await?;
 
     Ok(res)
 }

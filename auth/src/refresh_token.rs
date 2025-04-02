@@ -48,7 +48,6 @@ async fn refresh_token(Json(request): Json<LoginRequest>) -> response::Result<Lo
 
     let res = response
         .ensure_success_json::<LoginResponse>()
-        .log_err()
         .await?;
 
     Ok(res)

@@ -53,7 +53,11 @@ impl HttpAppErr {
 impl IntoResponse for HttpAppErr {
     fn into_response(self) -> axum::response::Response {
         let error_msg = HttpErrorMessage {
-            title: self.status.canonical_reason().unwrap_or(self.status.as_str()).to_owned(),
+            title: self
+                .status
+                .canonical_reason()
+                .unwrap_or(self.status.as_str())
+                .to_owned(),
             status: self.status.as_u16(),
             reason: self.reason,
         };
@@ -71,6 +75,15 @@ impl IntoResponse for AppErr {
         };
 
         (StatusCode::INTERNAL_SERVER_ERROR, Json(error_msg)).into_response()
+    }
+}
+
+impl From<HttpAppErr> for AppErr {
+    fn from(value: HttpAppErr) -> Self {
+        AppErr::from_owned(format!(
+            "failed to perform http call: {0} {1}",
+            value.status, value.reason
+        ))
     }
 }
 

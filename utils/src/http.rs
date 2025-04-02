@@ -3,11 +3,15 @@ use std::fmt::Display;
 use reqwest::{Client, IntoUrl, Response};
 use serde::{Serialize, de::DeserializeOwned};
 
+use crate::errors::HttpAppErr;
+
 use super::errors::AppErr;
 
 pub trait ResponseExtended {
     fn ensure_success(self) -> impl Future<Output = Result<(), AppErr>>;
-    fn ensure_success_json<T: DeserializeOwned>(self) -> impl Future<Output = Result<T, AppErr>>;
+    fn ensure_success_json<T: DeserializeOwned>(
+        self,
+    ) -> impl Future<Output = Result<T, HttpAppErr>>;
 }
 
 impl ResponseExtended for Response {
@@ -33,18 +37,17 @@ impl ResponseExtended for Response {
         }
     }
 
-    async fn ensure_success_json<T: DeserializeOwned>(self) -> Result<T, AppErr> {
+    async fn ensure_success_json<T: DeserializeOwned>(self) -> Result<T, HttpAppErr> {
         let status = self.status();
 
         if status.as_u16() < 400 {
-            let payload = self.json::<T>().await.map_err(|err| {
-                AppErr::from_owned(format!("failed to parse payload(request succeeded): {err}"))
-            })?;
+            let payload = self
+                .json::<T>()
+                .await
+                .map_err(|err| HttpAppErr::new(status, &format!("err: {err}")))?;
 
             Ok(payload)
         } else {
-            let url = self.url().to_owned();
-
             let body = self
                 .text()
                 .await
@@ -52,10 +55,7 @@ impl ResponseExtended for Response {
                 .ok()
                 .unwrap_or("".to_owned());
 
-            Err(AppErr::from_owned(format!(
-                "request {0} failed with {body}",
-                url
-            )))
+            Err(HttpAppErr::new(status, &body))
         }
     }
 }
