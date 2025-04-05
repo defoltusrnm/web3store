@@ -13,10 +13,10 @@ RUN apk --no-cache add \
     python3 \
     openssl-libs-static
 RUN cargo install --locked cargo-chef
-RUN rustup target add x86_64-unknown-linux-musl aarch64-unknown-linux-musl
 
 FROM chef AS planner
 
+# кодярник
 COPY ./auth/Cargo.toml ./auth/
 COPY ./auth/src ./auth/src
 
@@ -26,6 +26,7 @@ COPY ./utils/src ./utils/src
 RUN echo '[workspace]' > Cargo.toml && \
     echo 'members = ["auth", "utils"]' >> Cargo.toml && \
     echo 'resolver = "2"' >> Cargo.toml
+# endкодярник
 
 RUN cargo chef prepare --recipe-path recipe.json
 
@@ -33,6 +34,7 @@ FROM chef AS builder
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --recipe-path recipe.json --release
 
+# кодярник
 COPY ./auth/Cargo.toml ./auth/
 COPY ./auth/src ./auth/src
 
@@ -42,8 +44,9 @@ COPY ./utils/src ./utils/src
 RUN echo '[workspace]' > Cargo.toml && \
     echo 'members = ["auth", "utils"]' >> Cargo.toml && \
     echo 'resolver = "2"' >> Cargo.toml
+# endкодярник
 
-RUN cargo build -r --verbose
+RUN cargo build -r
 
 FROM alpine:latest AS runtime
 WORKDIR /app
