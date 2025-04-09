@@ -2,9 +2,9 @@
 
 @theme {
     --color-white: #ffffff;
-    --color-primary: #FFAFCC;
-    --color-secondary: #BDE0FE;
-    --color-background: #CDB4DB;
-    --color-foreground: #FFC8DD;
+    --color-primary: #525252;
+    --color-secondary: #EC625F;
+    --color-background: #313131;
+    --color-foreground: #414141;
     --font-mono: ui-monospace, "JetBrains Mono", monospace;
 }
