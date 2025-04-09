@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { notifyError } from "../../utils/toasts";
 import { RegularText } from "../../utils/theming/RegularText";
 import { Button } from "../../utils/theming/Button";
 import { Input } from "../../utils/theming/Input";
@@ -12,8 +11,8 @@ export const LoginPage = () => {
     const [login, setLogin] = useState("");
     const [password, setPassword] = useState("")
 
-    const onLoginClick = () => {
-        notifyError({ caption: 'sosi jepy pidpr' })
+    const loginAction = async () => {
+        
     }
 
     return (
@@ -29,11 +28,9 @@ export const LoginPage = () => {
                     <ProtectedInput placeholder='Enter password' value={password} onChange={setPassword} />
                 </div>
                 <div className="flex flex-row space-x-4">
-                    <div>
-                        <Button handler={onLoginClick}>
-                            <RegularText text={"Login"} />
-                        </Button>
-                    </div>
+                    <Button>
+                        <RegularText text={"Login"} />
+                    </Button>
                 </div>
             </div>
         </Center>
