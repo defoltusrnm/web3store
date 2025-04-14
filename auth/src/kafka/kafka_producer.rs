@@ -8,7 +8,7 @@ use rdkafka::{
 use serde::Serialize;
 use utils::errors::AppErr;
 
-pub async fn produce_event<'a, T: Serialize>(
+pub async fn produce_event<T: Serialize>(
     host: &str,
     topic: &str,
     message: T,
