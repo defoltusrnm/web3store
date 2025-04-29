@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use reqwest::{Client, Response};
 use tokio::select;
 use tokio_util::sync::CancellationToken;
@@ -19,21 +21,21 @@ use super::{
     routes::AdminRoutes,
 };
 
-pub struct DefaultKeycloakManagement<'a, TAuthorization, TRoutes>
+pub struct DefaultKeycloakManagement<TAuthorization, TRoutes>
 where
     TAuthorization: AdminAccessTokenProvider,
     TRoutes: AdminRoutes,
 {
-    auth_provider: &'a TAuthorization,
-    routes: &'a TRoutes,
+    auth_provider: Arc<TAuthorization>,
+    routes: Arc<TRoutes>,
 }
 
-impl<'a, TAuthorization, TRoutes> DefaultKeycloakManagement<'a, TAuthorization, TRoutes>
+impl<TAuthorization, TRoutes> DefaultKeycloakManagement<TAuthorization, TRoutes>
 where
     TAuthorization: AdminAccessTokenProvider,
     TRoutes: AdminRoutes,
 {
-    pub fn new(auth_provider: &'a TAuthorization, routes: &'a TRoutes) -> Self {
+    pub fn new(auth_provider: Arc<TAuthorization>, routes: Arc<TRoutes>) -> Self {
         DefaultKeycloakManagement {
             auth_provider,
             routes,
@@ -41,8 +43,8 @@ where
     }
 }
 
-impl<'a, TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> KeycloakManagement
-    for DefaultKeycloakManagement<'a, TAuthorization, TRoutes>
+impl<TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> KeycloakManagement
+    for DefaultKeycloakManagement<TAuthorization, TRoutes>
 {
     async fn create_realm_with_cancel(
         &self,

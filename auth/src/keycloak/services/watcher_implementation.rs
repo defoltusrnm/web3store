@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use tokio::{select, time::sleep};
 use tokio_util::sync::CancellationToken;
@@ -6,20 +6,20 @@ use utils::errors::AppErr;
 
 use super::{authorization::AdminAccessTokenProvider, watcher::KeycloakWatcher};
 
-pub struct DefaultKeycloakWatcher<'a, TAuthorization: AdminAccessTokenProvider> {
-    auth_provider: &'a TAuthorization,
+pub struct DefaultKeycloakWatcher<TAuthorization: AdminAccessTokenProvider> {
+    auth_provider: Arc<TAuthorization>,
 }
 
-impl<'a, TAuthorization> DefaultKeycloakWatcher<'a, TAuthorization>
+impl<TAuthorization> DefaultKeycloakWatcher<TAuthorization>
 where
     TAuthorization: AdminAccessTokenProvider,
 {
-    pub fn new(auth_provider: &'a TAuthorization) -> Self {
+    pub fn new(auth_provider: Arc<TAuthorization>) -> Self {
         DefaultKeycloakWatcher { auth_provider }
     }
 }
 
-impl<'a, TAuthorization> KeycloakWatcher for DefaultKeycloakWatcher<'a, TAuthorization>
+impl<TAuthorization> KeycloakWatcher for DefaultKeycloakWatcher<TAuthorization>
 where
     TAuthorization: AdminAccessTokenProvider,
 {

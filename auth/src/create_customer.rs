@@ -9,21 +9,15 @@ use utils::{
 use crate::{
     kafka::kafka_producer,
     keycloak::{
-        keycloak_ex::KeycloakExtensions,
-        services::{
-            authorization_implementation::DefaultAdminTokenProvider,
-            credentials_implementation::EnvAdminCredentialProvider,
-            host_implementation::EnvHostAddressProvider,
+        keycloak_ex::KeycloakExtensions, keycloak_factory::create_default_manager, services::{
             management::KeycloakManagement,
-            management_implementation::DefaultKeycloakManagement,
             queries::{clients::ClientsQuery, role::RoleQuery, users::UsersQuery},
             requests::{
                 assign_roles::{AssignRoleRequest, AssignRolesRequest},
                 create_user::CreateUserRequest,
                 update_users_email_request::UpdateUsersEmailRequest,
             },
-            routes_implementation::DefaultAdminRoutes,
-        },
+        }
     },
 };
 
@@ -32,12 +26,7 @@ pub fn create_customer_router() -> Router {
 }
 
 async fn create_customer(Json(request): Json<CreateCustomerRequest>) -> Result<StatusCode> {
-    let host_provider = &EnvHostAddressProvider::new("KEYCLOAK_HOST");
-    let credentials_provider =
-        &EnvAdminCredentialProvider::new("KEYCLOAK_ADMIN_LOGIN", "KEYCLOAK_ADMIN_PASSWORD");
-    let routes = &DefaultAdminRoutes::new(host_provider);
-    let auth_provider = &DefaultAdminTokenProvider::new(routes, credentials_provider);
-    let manager = &DefaultKeycloakManagement::new(auth_provider, routes);
+    let manager = create_default_manager();
 
     let realm_name = env_var("KEYCLOAK_REALM")?;
     let client_name = env_var("KEYCLOAK_CLIENT")?;

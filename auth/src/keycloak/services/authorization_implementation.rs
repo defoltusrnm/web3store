@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use reqwest::{Client, Response};
 use tokio::select;
@@ -10,22 +10,21 @@ use super::{
     responses::access_token::AccessTokenResponse, routes::AdminRoutes,
 };
 
-pub struct DefaultAdminTokenProvider<'a, TRoutes, TAdminCredentialProvider>
+pub struct DefaultAdminTokenProvider<TRoutes, TAdminCredentialProvider>
 where
     TRoutes: AdminRoutes,
     TAdminCredentialProvider: AdminCredentialProvider,
 {
-    routes: &'a TRoutes,
-    credentials_provider: &'a TAdminCredentialProvider,
+    routes: Arc<TRoutes>,
+    credentials_provider: Arc<TAdminCredentialProvider>,
 }
 
-impl<'a, TRoutes, TAdminCredentialProvider>
-    DefaultAdminTokenProvider<'a, TRoutes, TAdminCredentialProvider>
+impl<TRoutes, TAdminCredentialProvider> DefaultAdminTokenProvider<TRoutes, TAdminCredentialProvider>
 where
     TRoutes: AdminRoutes,
     TAdminCredentialProvider: AdminCredentialProvider,
 {
-    pub fn new(routes: &'a TRoutes, credentials_provider: &'a TAdminCredentialProvider) -> Self {
+    pub fn new(routes: Arc<TRoutes>, credentials_provider: Arc<TAdminCredentialProvider>) -> Self {
         DefaultAdminTokenProvider {
             routes,
             credentials_provider,
@@ -33,8 +32,8 @@ where
     }
 }
 
-impl<'a, TRoutes, TAdminCredentialProvider> AdminAccessTokenProvider
-    for DefaultAdminTokenProvider<'a, TRoutes, TAdminCredentialProvider>
+impl<TRoutes, TAdminCredentialProvider> AdminAccessTokenProvider
+    for DefaultAdminTokenProvider<TRoutes, TAdminCredentialProvider>
 where
     TRoutes: AdminRoutes,
     TAdminCredentialProvider: AdminCredentialProvider,

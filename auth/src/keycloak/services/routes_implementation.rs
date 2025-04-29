@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use utils::errors::AppErr;
 
 use super::{
@@ -5,17 +7,17 @@ use super::{
     routes::{AdminRoutes, Routes},
 };
 
-pub struct DefaultAdminRoutes<'a, THost: HostAddressProvider> {
-    provider: &'a THost,
+pub struct DefaultAdminRoutes<THost: HostAddressProvider> {
+    provider: Arc<THost>,
 }
 
-impl<'a, THost: HostAddressProvider> DefaultAdminRoutes<'a, THost> {
-    pub fn new(provider: &'a THost) -> Self {
+impl<THost: HostAddressProvider> DefaultAdminRoutes<THost> {
+    pub fn new(provider: Arc<THost>) -> Self {
         DefaultAdminRoutes { provider }
     }
 }
 
-impl<THost: HostAddressProvider> AdminRoutes for DefaultAdminRoutes<'_, THost> {
+impl<THost: HostAddressProvider> AdminRoutes for DefaultAdminRoutes<THost> {
     async fn get_access_token_route(&self) -> Result<String, AppErr> {
         self.provider
             .get_host()

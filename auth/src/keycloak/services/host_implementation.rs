@@ -4,19 +4,21 @@ use utils::errors::AppErr;
 
 use super::host::HostAddressProvider;
 
-pub struct EnvHostAddressProvider<'a> {
-    host_env: &'a str,
+pub struct EnvHostAddressProvider {
+    host_env: String,
 }
 
-impl<'a> EnvHostAddressProvider<'a> {
-    pub fn new(host_env: &'a str) -> Self {
-        EnvHostAddressProvider { host_env }
+impl EnvHostAddressProvider {
+    pub fn new<'a>(host_env: &'a str) -> Self {
+        EnvHostAddressProvider {
+            host_env: host_env.to_string(),
+        }
     }
 }
 
-impl<'a> HostAddressProvider for EnvHostAddressProvider<'a> {
+impl HostAddressProvider for EnvHostAddressProvider {
     async fn get_host(&self) -> Result<String, AppErr> {
-        env::var(self.host_env)
+        env::var(&self.host_env)
             .map_err(|err| AppErr::from_owned(format!("cannot get login env: {err}")))
     }
 }

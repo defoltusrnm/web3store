@@ -4,28 +4,28 @@ use utils::errors::AppErr;
 
 use super::credentials::AdminCredentialProvider;
 
-pub struct EnvAdminCredentialProvider<'a> {
-    login_env: &'a str,
-    password_env: &'a str,
+pub struct EnvAdminCredentialProvider {
+    login_env: String,
+    password_env: String,
 }
 
-impl<'a> EnvAdminCredentialProvider<'a> {
-    pub fn new(login_env: &'a str, password_env: &'a str) -> Self {
+impl EnvAdminCredentialProvider {
+    pub fn new(login_env: &str, password_env: &str) -> Self {
         EnvAdminCredentialProvider {
-            login_env: login_env,
-            password_env: password_env,
+            login_env: login_env.to_string(),
+            password_env: password_env.to_string(),
         }
     }
 }
 
-impl<'a> AdminCredentialProvider for EnvAdminCredentialProvider<'a> {
+impl AdminCredentialProvider for EnvAdminCredentialProvider {
     async fn get_login(&self) -> Result<String, AppErr> {
-        env::var(self.login_env)
+        env::var(&self.login_env)
             .map_err(|err| AppErr::from_owned(format!("cannot get login env: {err}")))
     }
 
     async fn get_password(&self) -> Result<String, AppErr> {
-        env::var(self.password_env)
+        env::var(&self.password_env)
             .map_err(|err| AppErr::from_owned(format!("cannot get password env: {err}")))
     }
 }
