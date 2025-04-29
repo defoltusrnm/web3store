@@ -12,16 +12,14 @@ use axum::{Router, response::Result};
 use create_customer::create_customer_router;
 use create_vendor::create_vendor_router;
 use futures::TryFutureExt;
-use keycloak::services::{
-    authorization_implementation::DefaultAdminTokenProvider,
-    credentials_implementation::EnvAdminCredentialProvider,
-    host_implementation::EnvHostAddressProvider,
-    management_implementation::DefaultKeycloakManagement,
-    routes_implementation::DefaultAdminRoutes,
-    seeding::{KeycloakSeeding, KeycloakSeedingArguments},
-    seeding_implementation::DefaultKeycloakSeeding,
-    watcher::KeycloakWatcher,
-    watcher_implementation::DefaultKeycloakWatcher,
+use keycloak::{
+    keycloak_factory::create_default_manager_and_auth,
+    services::{
+        seeding::{KeycloakSeeding, KeycloakSeedingArguments},
+        seeding_implementation::DefaultKeycloakSeeding,
+        watcher::KeycloakWatcher,
+        watcher_implementation::DefaultKeycloakWatcher,
+    },
 };
 use login::create_login_router;
 use refresh_token::create_refresh_token_router;
@@ -33,12 +31,7 @@ async fn main() -> Result<(), AppErr> {
     configure_dotenv();
     _ = configure_logs(log::LevelFilter::Info)?;
 
-    let host_provider = &EnvHostAddressProvider::new("KEYCLOAK_HOST");
-    let credentials_provider =
-        &EnvAdminCredentialProvider::new("KEYCLOAK_ADMIN_LOGIN", "KEYCLOAK_ADMIN_PASSWORD");
-    let routes = &DefaultAdminRoutes::new(host_provider);
-    let auth_provider = &DefaultAdminTokenProvider::new(routes, credentials_provider);
-    let keycloak_manager = &DefaultKeycloakManagement::new(auth_provider, routes);
+    let (keycloak_manager, auth_provider) = create_default_manager_and_auth();
 
     let keycloak_watcher = &DefaultKeycloakWatcher::new(auth_provider);
     let watcher_cancellation = &CancellationToken::new();

@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, fmt::Display};
 
 use utils::errors::AppErr;
 
@@ -9,7 +9,7 @@ pub struct EnvHostAddressProvider {
 }
 
 impl EnvHostAddressProvider {
-    pub fn new<'a>(host_env: &'a str) -> Self {
+    pub fn new(host_env: &impl Display) -> Self {
         EnvHostAddressProvider {
             host_env: host_env.to_string(),
         }

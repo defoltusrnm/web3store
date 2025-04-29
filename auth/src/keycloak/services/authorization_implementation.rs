@@ -35,8 +35,8 @@ where
 impl<TRoutes, TAdminCredentialProvider> AdminAccessTokenProvider
     for DefaultAdminTokenProvider<TRoutes, TAdminCredentialProvider>
 where
-    TRoutes: AdminRoutes,
-    TAdminCredentialProvider: AdminCredentialProvider,
+    TRoutes: AdminRoutes + Send + Sync,
+    TAdminCredentialProvider: AdminCredentialProvider + Send + Sync,
 {
     async fn get_access_token_with_cancel(
         &self,

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -15,13 +17,13 @@ pub struct CreateClientRequest {
 }
 
 impl CreateClientRequest {
-    pub fn new(client: &str, realm: &str, secret: &str) -> Self {
+    pub fn new(client: &impl Display, realm: &impl Display, secret: &impl Display) -> Self {
         CreateClientRequest {
-            realm: realm.to_owned(),
-            client_id: client.to_owned(),
+            realm: realm.to_string(),
+            client_id: client.to_string(),
             enabled: true,
             public_client: true,
-            secret: secret.to_owned(),
+            secret: secret.to_string(),
             direct_access_grants_enabled: true,
         }
     }

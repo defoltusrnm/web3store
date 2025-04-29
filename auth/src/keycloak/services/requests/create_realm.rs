@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -7,9 +9,9 @@ pub struct CreateRealmRequest {
 }
 
 impl CreateRealmRequest {
-    pub fn new(realm: &str) -> Self {
+    pub fn new(realm: &impl Display) -> Self {
         CreateRealmRequest {
-            realm: realm.to_owned(),
+            realm: realm.to_string(),
             enabled: true,
         }
     }

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -14,12 +16,12 @@ pub struct CreateUserRequest {
 }
 
 impl CreateUserRequest {
-    pub fn new(realm: &str, username: &str, password: &str) -> Self {
+    pub fn new(realm: &impl Display, username: &impl Display, password: &impl Display) -> Self {
         CreateUserRequest {
-            realm: realm.to_owned(),
-            username: username.to_owned(),
-            first_name: username.to_owned(),
-            last_name: username.to_owned(),
+            realm: realm.to_string(),
+            username: username.to_string(),
+            first_name: username.to_string(),
+            last_name: username.to_string(),
             enabled: true,
             credentials: [CreateUserCredentialsRequest::new(password)],
         }
@@ -35,10 +37,10 @@ pub struct CreateUserCredentialsRequest {
 }
 
 impl CreateUserCredentialsRequest {
-    pub fn new(password: &str) -> Self {
+    pub fn new(password: impl Display) -> Self {
         CreateUserCredentialsRequest {
             user_type: "password".to_owned(),
-            value: password.to_owned(),
+            value: password.to_string(),
             temporary: false,
         }
     }

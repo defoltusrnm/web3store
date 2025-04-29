@@ -12,11 +12,8 @@ use serde::{Deserialize, Serialize};
 use utils::{env::env_var, errors::HttpAppErr, http::ResponseExtended};
 
 use crate::keycloak::{
-    keycloak_ex::KeycloakExtensions,
-    services::{
-        host_implementation::EnvHostAddressProvider, routes::Routes,
-        routes_implementation::DefaultRoutes,
-    },
+    keycloak_ex::KeycloakExtensions, keycloak_factory::create_default_routes,
+    services::routes::Routes,
 };
 
 pub fn create_refresh_token_router() -> Router {
@@ -24,8 +21,7 @@ pub fn create_refresh_token_router() -> Router {
 }
 
 async fn refresh_token(Json(request): Json<LoginRequest>) -> response::Result<LoginResponse> {
-    let host_provider = &EnvHostAddressProvider::new("KEYCLOAK_HOST");
-    let routes = &DefaultRoutes::new(host_provider);
+    let routes = create_default_routes();
 
     let auth_url = routes
         .get_auth_route(&env_var("KEYCLOAK_REALM")?)
@@ -46,9 +42,7 @@ async fn refresh_token(Json(request): Json<LoginRequest>) -> response::Result<Lo
         .map_err(|_| HttpAppErr::new(StatusCode::FAILED_DEPENDENCY, "keycloak failed"))
         .await?;
 
-    let res = response
-        .ensure_success_json::<LoginResponse>()
-        .await?;
+    let res = response.ensure_success_json::<LoginResponse>().await?;
 
     Ok(res)
 }

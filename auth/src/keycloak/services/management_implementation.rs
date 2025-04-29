@@ -43,8 +43,11 @@ where
     }
 }
 
-impl<TAuthorization: AdminAccessTokenProvider, TRoutes: AdminRoutes> KeycloakManagement
+impl<TAuthorization, TRoutes> KeycloakManagement
     for DefaultKeycloakManagement<TAuthorization, TRoutes>
+where
+    TAuthorization: AdminAccessTokenProvider + Send + Sync,
+    TRoutes: AdminRoutes + Send + Sync,
 {
     async fn create_realm_with_cancel(
         &self,

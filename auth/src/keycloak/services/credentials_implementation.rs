@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, fmt::Display};
 
 use utils::errors::AppErr;
 
@@ -10,7 +10,7 @@ pub struct EnvAdminCredentialProvider {
 }
 
 impl EnvAdminCredentialProvider {
-    pub fn new(login_env: &str, password_env: &str) -> Self {
+    pub fn new(login_env: &impl Display, password_env: &impl Display) -> Self {
         EnvAdminCredentialProvider {
             login_env: login_env.to_string(),
             password_env: password_env.to_string(),

@@ -25,19 +25,22 @@ impl<TManager: KeycloakManagement> DefaultKeycloakSeeding<TManager> {
     }
 }
 
-impl<TManager: KeycloakManagement> KeycloakSeeding for DefaultKeycloakSeeding<TManager> {
-    async fn seed<'b>(&self, args: KeycloakSeedingArguments<'b>) -> Result<(), AppErr> {
+impl<TManager> KeycloakSeeding for DefaultKeycloakSeeding<TManager>
+where
+    TManager: KeycloakManagement + Send + Sync,
+{
+    async fn seed(&self, args: KeycloakSeedingArguments) -> Result<(), AppErr> {
         self.manager
-            .create_realm(&CreateRealmRequest::new(args.realm_name))
+            .create_realm(&CreateRealmRequest::new(&args.realm_name))
             .await?;
 
         log::info!("realm created");
 
         self.manager
             .create_client(&CreateClientRequest::new(
-                args.client_name,
-                args.realm_name,
-                args.client_secret,
+                &args.client_name,
+                &args.realm_name,
+                &args.client_secret,
             ))
             .await?;
 
@@ -45,7 +48,7 @@ impl<TManager: KeycloakManagement> KeycloakSeeding for DefaultKeycloakSeeding<TM
 
         let clients = self
             .manager
-            .query_clients(&ClientsQuery::new(args.realm_name, args.client_name))
+            .query_clients(&ClientsQuery::new(&args.realm_name, &args.client_name))
             .await?;
 
         let client = clients
@@ -57,10 +60,10 @@ impl<TManager: KeycloakManagement> KeycloakSeeding for DefaultKeycloakSeeding<TM
 
         self.manager
             .create_role(&CreateRoleRequest::new(
-                args.realm_name,
+                &args.realm_name,
                 &client.id,
-                args.customer_role_name,
-                "",
+                &args.customer_role_name,
+                &"",
             ))
             .await?;
 
@@ -68,10 +71,10 @@ impl<TManager: KeycloakManagement> KeycloakSeeding for DefaultKeycloakSeeding<TM
 
         self.manager
             .create_role(&CreateRoleRequest::new(
-                args.realm_name,
+                &args.realm_name,
                 &client.id,
-                args.vendor_role_name,
-                String::new().as_str(),
+                &args.vendor_role_name,
+                &"",
             ))
             .await?;
 

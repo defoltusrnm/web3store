@@ -21,7 +21,7 @@ where
 
 impl<TAuthorization> KeycloakWatcher for DefaultKeycloakWatcher<TAuthorization>
 where
-    TAuthorization: AdminAccessTokenProvider,
+    TAuthorization: AdminAccessTokenProvider + Send + Sync,
 {
     async fn watch(&self, cancellation_token: &CancellationToken) -> Result<(), AppErr> {
         loop {

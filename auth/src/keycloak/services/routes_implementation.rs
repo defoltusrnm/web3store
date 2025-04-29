@@ -1,5 +1,6 @@
-use std::sync::Arc;
+use std::{fmt::Display, sync::Arc};
 
+use futures::TryFutureExt;
 use utils::errors::AppErr;
 
 use super::{
@@ -17,34 +18,47 @@ impl<THost: HostAddressProvider> DefaultAdminRoutes<THost> {
     }
 }
 
-impl<THost: HostAddressProvider> AdminRoutes for DefaultAdminRoutes<THost> {
+impl<THost> AdminRoutes for DefaultAdminRoutes<THost>
+where
+    THost: HostAddressProvider + Send + Sync,
+{
     async fn get_access_token_route(&self) -> Result<String, AppErr> {
         self.provider
             .get_host()
+            .map_ok(|x| format!("{0}/realms/master/protocol/openid-connect/token", x))
             .await
-            .map(|x| format!("{0}/realms/master/protocol/openid-connect/token", x))
     }
 
     async fn get_create_realm_route(&self) -> Result<String, AppErr> {
         self.provider
             .get_host()
+            .map_ok(|x| format!("{0}/admin/realms", x))
             .await
-            .map(|x| format!("{0}/admin/realms", x))
     }
 
-    async fn get_create_client_route(&self, realm: &str) -> Result<String, AppErr> {
+    async fn get_create_client_route(
+        &self,
+        realm: &(impl Display + Send + Sync),
+    ) -> Result<String, AppErr> {
         let host = self.provider.get_host().await?;
 
         Ok(format!("{0}/admin/realms/{1}/clients", host, realm))
     }
 
-    async fn get_create_user_route(&self, realm: &str) -> Result<String, AppErr> {
+    async fn get_create_user_route(
+        &self,
+        realm: &(impl Display + Send + Sync),
+    ) -> Result<String, AppErr> {
         let host = self.provider.get_host().await?;
 
         Ok(format!("{0}/admin/realms/{1}/users", host, realm))
     }
 
-    async fn get_users_query_route(&self, realm: &str, username: &str) -> Result<String, AppErr> {
+    async fn get_users_query_route(
+        &self,
+        realm: &(impl Display + Send + Sync),
+        username: &(impl Display + Send + Sync),
+    ) -> Result<String, AppErr> {
         let host = self.provider.get_host().await?;
 
         Ok(format!(
@@ -55,8 +69,8 @@ impl<THost: HostAddressProvider> AdminRoutes for DefaultAdminRoutes<THost> {
 
     async fn get_clients_query_route(
         &self,
-        realm: &str,
-        client_id: &str,
+        realm: &(impl Display + Send + Sync),
+        client_id: &(impl Display + Send + Sync),
     ) -> Result<String, AppErr> {
         let host = self.provider.get_host().await?;
 
@@ -68,8 +82,8 @@ impl<THost: HostAddressProvider> AdminRoutes for DefaultAdminRoutes<THost> {
 
     async fn get_create_role_route(
         &self,
-        realm: &str,
-        client_uuid: &str,
+        realm: &(impl Display + Send + Sync),
+        client_uuid: &(impl Display + Send + Sync),
     ) -> Result<String, AppErr> {
         let host = self.provider.get_host().await?;
 
@@ -81,9 +95,9 @@ impl<THost: HostAddressProvider> AdminRoutes for DefaultAdminRoutes<THost> {
 
     async fn get_role_query_route(
         &self,
-        realm: &str,
-        client_uuid: &str,
-        role_name: &str,
+        realm: &(impl Display + Send + Sync),
+        client_uuid: &(impl Display + Send + Sync),
+        role_name: &(impl Display + Send + Sync),
     ) -> Result<String, AppErr> {
         let host = self.provider.get_host().await?;
 
@@ -95,9 +109,9 @@ impl<THost: HostAddressProvider> AdminRoutes for DefaultAdminRoutes<THost> {
 
     async fn get_assign_roles_query_route(
         &self,
-        realm: &str,
-        user_uuid: &str,
-        client_uuid: &str,
+        realm: &(impl Display + Send + Sync),
+        user_uuid: &(impl Display + Send + Sync),
+        client_uuid: &(impl Display + Send + Sync),
     ) -> Result<String, AppErr> {
         let host = self.provider.get_host().await?;
 
@@ -107,7 +121,11 @@ impl<THost: HostAddressProvider> AdminRoutes for DefaultAdminRoutes<THost> {
         ))
     }
 
-    async fn get_update_user_route(&self, realm: &str, user_uuid: &str) -> Result<String, AppErr> {
+    async fn get_update_user_route(
+        &self,
+        realm: &(impl Display + Send + Sync),
+        user_uuid: &(impl Display + Send + Sync),
+    ) -> Result<String, AppErr> {
         let host = self.provider.get_host().await?;
 
         Ok(format!(
@@ -117,18 +135,21 @@ impl<THost: HostAddressProvider> AdminRoutes for DefaultAdminRoutes<THost> {
     }
 }
 
-pub struct DefaultRoutes<'a, THost: HostAddressProvider> {
-    provider: &'a THost,
+pub struct DefaultRoutes<THost: HostAddressProvider> {
+    provider: Arc<THost>,
 }
 
-impl<'a, THost: HostAddressProvider> DefaultRoutes<'a, THost> {
-    pub fn new(provider: &'a THost) -> Self {
+impl<THost: HostAddressProvider> DefaultRoutes<THost> {
+    pub fn new(provider: Arc<THost>) -> Self {
         DefaultRoutes { provider }
     }
 }
 
-impl<'a, THost: HostAddressProvider> Routes for DefaultRoutes<'a, THost> {
-    async fn get_auth_route(&self, realm: &str) -> Result<String, AppErr> {
+impl<THost> Routes for DefaultRoutes<THost>
+where
+    THost: HostAddressProvider + Send + Sync,
+{
+    async fn get_auth_route(&self, realm: &impl Display) -> Result<String, AppErr> {
         let host = self.provider.get_host().await?;
 
         Ok(format!(

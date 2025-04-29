@@ -5,5 +5,5 @@ pub trait KeycloakWatcher {
     fn watch(
         &self,
         cancellation_token: &CancellationToken,
-    ) -> impl Future<Output = Result<(), AppErr>>;
+    ) -> impl Future<Output = Result<(), AppErr>> + Send;
 }

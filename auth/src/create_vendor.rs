@@ -9,7 +9,9 @@ use utils::{
 use crate::{
     kafka::kafka_producer,
     keycloak::{
-        keycloak_ex::KeycloakExtensions, keycloak_factory::create_default_manager, services::{
+        keycloak_ex::KeycloakExtensions,
+        keycloak_factory::create_default_manager,
+        services::{
             management::KeycloakManagement,
             queries::{clients::ClientsQuery, role::RoleQuery, users::UsersQuery},
             requests::{
@@ -17,7 +19,7 @@ use crate::{
                 create_user::CreateUserRequest,
                 update_users_email_request::UpdateUsersEmailRequest,
             },
-        }
+        },
     },
 };
 

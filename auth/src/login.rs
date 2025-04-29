@@ -12,11 +12,8 @@ use serde::{Deserialize, Serialize};
 use utils::{env::env_var, errors::HttpAppErr, http::ResponseExtended};
 
 use crate::keycloak::{
-    keycloak_ex::KeycloakExtensions,
-    services::{
-        host_implementation::EnvHostAddressProvider, routes::Routes,
-        routes_implementation::DefaultRoutes,
-    },
+    keycloak_ex::KeycloakExtensions, keycloak_factory::create_default_routes,
+    services::routes::Routes,
 };
 
 pub fn create_login_router() -> Router {
@@ -24,8 +21,7 @@ pub fn create_login_router() -> Router {
 }
 
 async fn login(Json(request): Json<LoginRequest>) -> Result<LoginResponse> {
-    let host_provider = &EnvHostAddressProvider::new("KEYCLOAK_HOST");
-    let routes = &DefaultRoutes::new(host_provider);
+    let routes = create_default_routes();
 
     let auth_url = routes
         .get_auth_route(&env_var("KEYCLOAK_REALM")?)

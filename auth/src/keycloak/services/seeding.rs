@@ -1,34 +1,34 @@
 use utils::errors::AppErr;
 
-pub struct KeycloakSeedingArguments<'a> {
-    pub realm_name: &'a str,
-    pub client_name: &'a str,
-    pub client_secret: &'a str,
-    pub customer_role_name: &'a str,
-    pub vendor_role_name: &'a str,
+pub struct KeycloakSeedingArguments {
+    pub realm_name: String,
+    pub client_name: String,
+    pub client_secret: String,
+    pub customer_role_name: String,
+    pub vendor_role_name: String,
 }
 
-impl<'a> KeycloakSeedingArguments<'a> {
+impl KeycloakSeedingArguments {
     pub fn new(
-        realm_name: &'a str,
-        client_name: &'a str,
-        client_secret: &'a str,
-        customer_role_name: &'a str,
-        vendor_role_name: &'a str,
+        realm_name: &str,
+        client_name: &str,
+        client_secret: &str,
+        customer_role_name: &str,
+        vendor_role_name: &str,
     ) -> Self {
         KeycloakSeedingArguments {
-            realm_name,
-            client_name,
-            client_secret,
-            customer_role_name,
-            vendor_role_name,
+            realm_name: realm_name.to_string(),
+            client_name: client_name.to_string(),
+            client_secret: client_secret.to_string(),
+            customer_role_name: customer_role_name.to_string(),
+            vendor_role_name: vendor_role_name.to_string(),
         }
     }
 }
 
 pub trait KeycloakSeeding {
-    fn seed<'a>(
+    fn seed(
         &self,
-        args: KeycloakSeedingArguments<'a>,
-    ) -> impl Future<Output = Result<(), AppErr>>;
+        args: KeycloakSeedingArguments,
+    ) -> impl Future<Output = Result<(), AppErr>> + Send;
 }

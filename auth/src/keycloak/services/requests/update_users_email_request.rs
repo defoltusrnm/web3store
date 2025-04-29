@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -12,11 +14,15 @@ pub struct UpdateUsersEmailRequest {
 }
 
 impl UpdateUsersEmailRequest {
-    pub fn new_verified(realm: &str, user_uuid: &str, email: &str) -> Self {
+    pub fn new_verified(
+        realm: &impl Display,
+        user_uuid: &impl Display,
+        email: &impl Display,
+    ) -> Self {
         UpdateUsersEmailRequest {
-            realm: realm.to_owned(),
-            user_uuid: user_uuid.to_owned(),
-            email: email.to_owned(),
+            realm: realm.to_string(),
+            user_uuid: user_uuid.to_string(),
+            email: email.to_string(),
             email_verified: true,
         }
     }

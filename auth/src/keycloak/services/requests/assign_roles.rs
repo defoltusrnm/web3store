@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::Serialize;
 
 pub struct AssignRolesRequest {
@@ -9,15 +11,15 @@ pub struct AssignRolesRequest {
 
 impl AssignRolesRequest {
     pub fn new(
-        realm: &str,
-        user_uuid: &str,
-        client_uuid: &str,
+        realm: &impl Display,
+        user_uuid: &impl Display,
+        client_uuid: &impl Display,
         assign_roles: &[AssignRoleRequest],
     ) -> Self {
         AssignRolesRequest {
-            realm: realm.to_owned(),
-            user_uuid: user_uuid.to_owned(),
-            client_uuid: client_uuid.to_owned(),
+            realm: realm.to_string(),
+            user_uuid: user_uuid.to_string(),
+            client_uuid: client_uuid.to_string(),
             assign_roles: assign_roles.to_vec(),
         }
     }
@@ -30,10 +32,10 @@ pub struct AssignRoleRequest {
 }
 
 impl AssignRoleRequest {
-    pub fn new(id: &str, name: &str) -> Self {
+    pub fn new(id: &impl Display, name: &impl Display) -> Self {
         AssignRoleRequest {
-            id: id.to_owned(),
-            name: name.to_owned(),
+            id: id.to_string(),
+            name: name.to_string(),
         }
     }
 }
