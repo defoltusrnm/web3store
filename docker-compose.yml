@@ -129,6 +129,29 @@ services:
       - KAFKA_VENDOR_TOPIC=vendor-created
       - DB_HOST=postgres://usr:pwd@vendors_pg:5432/vendors_db
 
+  goods_db:
+    image: scylladb/scylla
+    container_name: goods_db
+
+  goods_service:
+    container_name: goods_service
+    build:
+      context: .
+      dockerfile: goods/Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    networks:
+      - solution_net
+    depends_on:
+      - goods_db
+    environment:
+      - SERVICE_HOST=0.0.0.0:80
+      - DB_HOST=goods_db
+
   proxy:
     build:
       context: .
